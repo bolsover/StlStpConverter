@@ -16,10 +16,8 @@
         FACE,
         FACE_BOUND,
         MANIFOLD_SHAPE,
-        POINT,
         SHELL,
-        SHELL_MODEL,
-        VERTEX,
-        CSYS3D
+        SHELL_MODEL
+       
     }
 }

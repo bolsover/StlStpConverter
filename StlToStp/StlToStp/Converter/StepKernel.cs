@@ -2,91 +2,106 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Bolsover.StlToStp.Converter
 {
     public class StepKernel
     {
-        public List<Entity> Entities { get; private set; } = new List<Entity>();
+        private List<Entity> Entities { get; } = new();
 
-        // Constructor
-        public StepKernel()
+        // Helper: Calculate normalized direction vector between two points
+        private (double x, double y, double z, double distance) CalculateDirection(double[] from, double[] to)
         {
+            var dx = to[0] - from[0];
+            var dy = to[1] - from[1];
+            var dz = to[2] - from[2];
+            var distance = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (distance > 0)
+            {
+                dx /= distance;
+                dy /= distance;
+                dz /= distance;
+            }
+
+            return (dx, dy, dz, distance);
         }
 
-
-        // Create EdgeCurve
-        public EdgeCurve CreateEdgeCurve(Vertex vert1, Vertex vert2, bool dir)
+        // Helper: Calculate cross product of two vectors
+        private double[] CrossProduct(double[] v1, double[] v2)
         {
-            // Create starting point
+            return new[]
+            {
+                v1[1] * v2[2] - v1[2] * v2[1],
+                v1[2] * v2[0] - v1[0] * v2[2],
+                v1[0] * v2[1] - v1[1] * v2[0]
+            };
+        }
+
+        // Helper: Normalize a vector in-place
+        private static void NormalizeVector(double[] vector)
+        {
+            var length = Math.Sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+            if (length > 0)
+            {
+                for (int i = 0; i < 3; i++)
+                    vector[i] /= length;
+            }
+        }
+
+        
+        private EdgeCurve CreateEdgeCurve(Vertex vert1, Vertex vert2, bool dir)
+        {
             var linePoint1 = new Point(Entities, vert1.Point.X, vert1.Point.Y, vert1.Point.Z);
 
-            // Compute direction vector
-            double vx = vert2.Point.X - vert1.Point.X;
-            double vy = vert2.Point.Y - vert1.Point.Y;
-            double vz = vert2.Point.Z - vert1.Point.Z;
-            double dist = Math.Sqrt(vx * vx + vy * vy + vz * vz);
-
-            vx /= dist;
-            vy /= dist;
-            vz /= dist;
+            var (vx, vy, vz, _) = CalculateDirection(
+                new[] { vert1.Point.X, vert1.Point.Y, vert1.Point.Z },
+                new[] { vert2.Point.X, vert2.Point.Y, vert2.Point.Z }
+            );
 
             var lineDir1 = new Direction(Entities, vx, vy, vz);
             var lineVector1 = new Vector(Entities, lineDir1, 1.0);
             var line1 = new Line(Entities, linePoint1, lineVector1);
             var surfCurve1 = new SurfaceCurve(Entities, line1);
-
             return new EdgeCurve(Entities, vert1, vert2, surfCurve1, dir);
         }
 
-        // Build triangular body
+        
         public void BuildTriBody(List<double> tris, double tol, ref int mergedEdgeCount)
         {
             var originPoint = new Point(Entities, 0.0, 0.0, 0.0);
             var dir1 = new Direction(Entities, 0.0, 0.0, 1.0);
             var dir2 = new Direction(Entities, 1.0, 0.0, 0.0);
             var baseCsys = new Csys3D(Entities, dir1, dir2, originPoint);
-
             var faces = new List<Face>();
             var edgeMap = new Dictionary<(double, double, double, double, double, double), EdgeCurve>();
 
-            for (int i = 0; i < tris.Count / 9; i++)
+            for (var i = 0; i < tris.Count / 9; i++)
             {
                 double[] p0 = { tris[i * 9 + 0], tris[i * 9 + 1], tris[i * 9 + 2] };
                 double[] p1 = { tris[i * 9 + 3], tris[i * 9 + 4], tris[i * 9 + 5] };
                 double[] p2 = { tris[i * 9 + 6], tris[i * 9 + 7], tris[i * 9 + 8] };
 
                 // Compute directions
-                double[] d0 = { p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2] };
-                double dist0 = Math.Sqrt(d0[0] * d0[0] + d0[1] * d0[1] + d0[2] * d0[2]);
+                var (d0x, d0y, d0z, dist0) = CalculateDirection(p0, p1);
                 if (dist0 < tol) continue;
-                for (int j = 0; j < 3; j++) d0[j] /= dist0;
+                double[] d0 = { d0x, d0y, d0z };
 
-                double[] d1 = { p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2] };
-                double dist1 = Math.Sqrt(d1[0] * d1[0] + d1[1] * d1[1] + d1[2] * d1[2]);
+                var (d1x, d1y, d1z, dist1) = CalculateDirection(p0, p2);
                 if (dist1 < tol) continue;
-                for (int j = 0; j < 3; j++) d1[j] /= dist1;
+                double[] d1 = { d1x, d1y, d1z };
 
                 // Cross product for normal
-                double[] d2 =
-                {
-                    d0[1] * d1[2] - d0[2] * d1[1],
-                    d0[2] * d1[0] - d0[0] * d1[2],
-                    d0[0] * d1[1] - d0[1] * d1[0]
-                };
-                double dist2 = Math.Sqrt(d2[0] * d2[0] + d2[1] * d2[1] + d2[2] * d2[2]);
-                if (dist2 < tol) continue;
-                for (int j = 0; j < 3; j++) d2[j] /= dist2;
+                double[] d2 = CrossProduct(d0, d1);
+                NormalizeVector(d2);
 
-                // Correct d1
-                double[] d1Cor =
-                {
-                    d2[1] * d0[2] - d2[2] * d0[1],
-                    d2[2] * d0[0] - d2[0] * d0[2],
-                    d2[0] * d0[1] - d2[1] * d0[0]
-                };
-                double d1CorLen = Math.Sqrt(d1Cor[0] * d1Cor[0] + d1Cor[1] * d1Cor[1] + d1Cor[2] * d1Cor[2]);
-                for (int j = 0; j < 3; j++) d1[j] = d1Cor[j] / d1CorLen;
+                if (Math.Sqrt(d2[0] * d2[0] + d2[1] * d2[1] + d2[2] * d2[2]) < tol) continue;
+
+                // Correct d1 to be orthogonal
+                double[] d1Cor = CrossProduct(d2, d0);
+                NormalizeVector(d1Cor);
+                d1 = d1Cor;
 
                 // Create vertices
                 var vert1 = new Vertex(Entities, new Point(Entities, p0[0], p0[1], p0[2]));
@@ -94,17 +109,18 @@ namespace Bolsover.StlToStp.Converter
                 var vert3 = new Vertex(Entities, new Point(Entities, p2[0], p2[1], p2[2]));
 
                 // Get edges
-                EdgeCurve edgeCurve1, edgeCurve2, edgeCurve3;
-                bool edgeDir1, edgeDir2, edgeDir3;
-                GetEdgeFromMap(p0, p1, edgeMap, vert1, vert2, out edgeCurve1, out edgeDir1, ref mergedEdgeCount);
-                GetEdgeFromMap(p1, p2, edgeMap, vert2, vert3, out edgeCurve2, out edgeDir2, ref mergedEdgeCount);
-                GetEdgeFromMap(p2, p0, edgeMap, vert3, vert1, out edgeCurve3, out edgeDir3, ref mergedEdgeCount);
+                GetEdgeFromMap(p0, p1, edgeMap, vert1, vert2, out var edgeCurve1, out var edgeDir1,
+                    ref mergedEdgeCount);
+                GetEdgeFromMap(p1, p2, edgeMap, vert2, vert3, out var edgeCurve2, out var edgeDir2,
+                    ref mergedEdgeCount);
+                GetEdgeFromMap(p2, p0, edgeMap, vert3, vert1, out var edgeCurve3, out var edgeDir3,
+                    ref mergedEdgeCount);
 
                 var orientedEdges = new List<OrientedEdge>
                 {
-                    new OrientedEdge(Entities, edgeCurve1, edgeDir1),
-                    new OrientedEdge(Entities, edgeCurve2, edgeDir2),
-                    new OrientedEdge(Entities, edgeCurve3, edgeDir3)
+                    new(Entities, edgeCurve1, edgeDir1),
+                    new(Entities, edgeCurve2, edgeDir2),
+                    new(Entities, edgeCurve3, edgeDir3)
                 };
 
                 // Plane and csys
@@ -113,9 +129,8 @@ namespace Bolsover.StlToStp.Converter
                 var planeDir2 = new Direction(Entities, d0[0], d0[1], d0[2]);
                 var planeCsys = new Csys3D(Entities, planeDir1, planeDir2, planePoint);
                 var plane = new Plane(Entities, planeCsys);
-
                 var edgeLoop = new EdgeLoop(Entities, orientedEdges);
-                var faceBounds = new List<FaceBound> { new FaceBound(Entities, edgeLoop, true) };
+                var faceBounds = new List<FaceBound> { new(Entities, edgeLoop, true) };
                 faces.Add(new Face(Entities, faceBounds, plane, true));
             }
 
@@ -126,7 +141,7 @@ namespace Bolsover.StlToStp.Converter
         }
 
         // Get edge from map
-        public void GetEdgeFromMap(
+        private void GetEdgeFromMap(
             double[] p0,
             double[] p1,
             Dictionary<(double, double, double, double, double, double), EdgeCurve> edgeMap,
@@ -138,19 +153,18 @@ namespace Bolsover.StlToStp.Converter
         {
             edgeCurve = null;
             edgeDir = true;
-
             var keyForward = (p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]);
             var keyReverse = (p1[0], p1[1], p1[2], p0[0], p0[1], p0[2]);
 
-            if (edgeMap.ContainsKey(keyForward))
+            if (edgeMap.TryGetValue(keyForward, out var value1))
             {
-                edgeCurve = edgeMap[keyForward];
+                edgeCurve = value1;
                 edgeDir = true;
                 mergeCount++;
             }
-            else if (edgeMap.ContainsKey(keyReverse))
+            else if (edgeMap.TryGetValue(keyReverse, out var value))
             {
-                edgeCurve = edgeMap[keyReverse];
+                edgeCurve = value;
                 edgeDir = false;
                 mergeCount++;
             }
@@ -162,7 +176,7 @@ namespace Bolsover.StlToStp.Converter
             }
         }
 
-        // Write STEP file
+       
         public void WriteStep(string fileName)
         {
             var isoTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
@@ -176,7 +190,6 @@ namespace Bolsover.StlToStp.Converter
             writer.WriteLine("DATA;");
             foreach (var e in Entities)
             {
-                //  Console.WriteLine(e);
                 e.Serialize(writer);
             }
 
@@ -186,22 +199,32 @@ namespace Bolsover.StlToStp.Converter
             writer.Close();
         }
 
-        // Read line from STEP file
-        public string ReadLine(StreamReader stpFile, bool skipAllSpace)
+        private const char StatementTerminator = ';';
+        private const char LineBreak = '\n';
+        private const char CarriageReturn = '\r';
+        private const char Tab = '\t';
+        private const char Space = ' ';
+        private const char EntityPrefix = '#';
+        private new const char Equals = '=';
+        private const char OpenParen = '(';
+        private const char CloseParen = ')';
+
+        private static string ReadLine(StreamReader stpFile, bool skipAllSpace)
         {
-            var lineStr = string.Empty;
-            bool leadingSpace = true;
+            var lineBuilder = new StringBuilder();
+            var leadingSpace = true;
+
             while (!stpFile.EndOfStream)
             {
                 char ch = (char)stpFile.Read();
-                if (ch == ';') break;
-                if (ch == '\n' || ch == '\r' || ch == '\t') continue;
-                if (leadingSpace && (ch == ' ' || ch == '\t')) continue;
+                if (ch == StatementTerminator) break;
+                if (ch is LineBreak or CarriageReturn or Tab) continue;
+                if (leadingSpace && ch is Space or Tab) continue;
                 if (!skipAllSpace) leadingSpace = false;
-                lineStr += ch;
+                lineBuilder.Append(ch);
             }
 
-            return lineStr;
+            return lineBuilder.ToString();
         }
 
         public void ReadStep(string fileName)
@@ -210,17 +233,16 @@ namespace Bolsover.StlToStp.Converter
                 return;
 
             using var stpFile = new StreamReader(fileName);
-            // Read first line (ISO header)
-            string isoLine = ReadLine(stpFile, true);
+            ReadLine(stpFile, true); // Skip ISO header
 
-            bool dataSection = false;
+            var dataSection = false;
             var ents = new List<Entity>();
             var entMap = new Dictionary<int, Entity>();
             var args = new List<string>();
 
             while (!stpFile.EndOfStream)
             {
-                string curStr = ReadLine(stpFile, false);
+                var curStr = ReadLine(stpFile, false);
 
                 if (curStr == "DATA")
                 {
@@ -228,114 +250,107 @@ namespace Bolsover.StlToStp.Converter
                     continue;
                 }
 
-                if (!dataSection)
-                    continue;
+                if (!dataSection) continue;
+                if (curStr == "ENDSEC") break;
 
-                if (curStr == "ENDSEC")
-                {
-                    dataSection = false;
-                    break;
-                }
-
-                // Parse entity line
-                int id = -1;
-                if (curStr.Length > 0 && curStr[0] == '#' && curStr.Contains("="))
-                {
-                    int equalPos = curStr.IndexOf('=');
-                    int parenPos = curStr.IndexOf('(');
-                    string idStr = curStr.Substring(1, equalPos - 1).Trim();
-                    id = int.TryParse(idStr, out var parsedId) ? parsedId : -1;
-
-                    // int funcStart = curStr.IndexOfAny(new[] { ' ', '\t' }, equalPos + 1);
-                    int funcEnd = curStr.IndexOfAny(new[] { ' ', '\t', '(' }, equalPos + 1);
-                    //    string funcName = curStr.Substring(funcStart, funcEnd - funcStart).Trim();
-
-                    int argEnd = curStr.LastIndexOf(')');
-                    string argStr = curStr.Substring(funcEnd + 1, argEnd - funcEnd - 1);
-                    EntityType entityType = ParseEntityType(curStr);
-
-                    Entity ent = entityType.ToString() switch
-                    {
-                        "CARTESIAN_POINT" => new Point(Entities),
-                        "DIRECTION" => new Direction(Entities),
-                        "AXIS2_PLACEMENT_3D" => new Csys3D(Entities),
-                        "PLANE" => new Plane(Entities),
-                        "EDGE_LOOP" => new EdgeLoop(Entities),
-                        "FACE_BOUND" or "FACE_OUTER_BOUND" => new FaceBound(Entities),
-                        "ADVANCED_FACE" or "FACE_SURFACE" => new Face(Entities),
-                        "OPEN_SHELL" or "CLOSED_SHELL" => new Shell(Entities),
-                        "SHELL_BASED_SURFACE_MODEL" => new ShellModel(Entities),
-                        "MANIFOLD_SURFACE_SHAPE_REPRESENTATION" => new ManifoldShape(Entities),
-                        "VERTEX_POINT" => new Vertex(Entities),
-                        "SURFACE_CURVE" => new SurfaceCurve(Entities),
-                        "EDGE_CURVE" => new EdgeCurve(Entities),
-                        "ORIENTED_EDGE" => new OrientedEdge(Entities),
-                        "VECTOR" => new Vector(Entities),
-                        "LINE" => new Line(Entities),
-                        _ => null
-                    };
-
-                    if (ent != null)
-                    {
-                        ent.Id = id;
-                        entMap[id] = ent;
-                        ents.Add(ent);
-                        args.Add(argStr);
-                    }
-                }
-
-                Console.WriteLine(curStr);
+                if (!TryParseEntityLine(curStr, out var entity, out var argStr)) continue;
+                entMap[entity.Id] = entity;
+                ents.Add(entity);
+                args.Add(argStr);
             }
 
-            // Process arguments
-            for (int i = 0; i < ents.Count; i++)
+            for (var i = 0; i < ents.Count; i++)
             {
                 ents[i].ParseArgs(entMap, args[i]);
             }
         }
 
-// Parse the STEP ASCII entity type from a line and return corresponding EntityType
-        public static EntityType ParseEntityType(string line)
+        private bool TryParseEntityLine(string line, out Entity entity, out string argStr)
         {
-            if (string.IsNullOrWhiteSpace(line)) throw new ArgumentException("line is null or empty", nameof(line));
+            entity = null;
+            argStr = string.Empty;
 
-            // Expect format like:  #1 = CARTESIAN_POINT('', (0,0,0));
-            int eq = line.IndexOf('=');
-            int paren = line.IndexOf('(');
+            if (line.Length == 0 || line[0] != EntityPrefix || !line.Contains(Equals))
+                return false;
+
+            var equalPos = line.IndexOf(Equals);
+            var idStr = line.Substring(1, equalPos - 1).Trim();
+
+            if (!int.TryParse(idStr, out var id))
+                return false;
+
+            var funcEnd = line.IndexOfAny(new[] { Space, Tab, OpenParen }, equalPos + 1);
+            var argEnd = line.LastIndexOf(CloseParen);
+            argStr = line.Substring(funcEnd + 1, argEnd - funcEnd - 1);
+
+            var entityType = ParseEntityType(line);
+            entity = CreateEntity(entityType);
+
+            if (entity == null) return false;
+            entity.Id = id;
+            return true;
+
+        }
+
+        private Entity CreateEntity(EntityType entityType)
+        {
+            return entityType switch
+            {
+                EntityType.CARTESIAN_POINT => new Point(Entities),
+                EntityType.DIRECTION => new Direction(Entities),
+                EntityType.AXIS2_PLACEMENT_3D => new Csys3D(Entities),
+                EntityType.PLANE => new Plane(Entities),
+                EntityType.EDGE_LOOP => new EdgeLoop(Entities),
+                EntityType.FACE_BOUND => new FaceBound(Entities),
+                EntityType.FACE => new Face(Entities),
+                EntityType.SHELL => new Shell(Entities),
+                EntityType.SHELL_MODEL => new ShellModel(Entities),
+                EntityType.MANIFOLD_SHAPE => new ManifoldShape(Entities),
+                EntityType.VERTEX_POINT => new Vertex(Entities),
+                EntityType.SURFACE_CURVE => new SurfaceCurve(Entities),
+                EntityType.EDGE_CURVE => new EdgeCurve(Entities),
+                EntityType.ORIENTED_EDGE => new OrientedEdge(Entities),
+                EntityType.VECTOR => new Vector(Entities),
+                EntityType.LINE => new Line(Entities),
+                _ => null
+            };
+        }
+
+        private static EntityType ParseEntityType(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                throw new ArgumentException("line is null or empty", nameof(line));
+
+            var eq = line.IndexOf(Equals);
+            var paren = line.IndexOf(OpenParen);
+
             if (eq < 0 || paren < 0 || paren < eq)
                 throw new FormatException("Invalid STEP line format");
 
-            // Extract token between '=' and '(' and normalize
-            string token = line.Substring(eq + 1, paren - (eq + 1)).Trim();
-            // Token might have trailing/leading spaces; ensure upper-case for mapping
-            string t = token.ToUpperInvariant();
+            var token = line.Substring(eq + 1, paren - (eq + 1)).Trim().ToUpperInvariant();
 
-            switch (t)
+            return token switch
             {
-                case "CARTESIAN_POINT": return EntityType.CARTESIAN_POINT;
-                case "DIRECTION": return EntityType.DIRECTION;
-                case "AXIS2_PLACEMENT_3D": return EntityType.AXIS2_PLACEMENT_3D;
-                case "PLANE": return EntityType.PLANE;
-                case "EDGE_LOOP": return EntityType.EDGE_LOOP;
-                case "FACE_BOUND":
-                case "FACE_OUTER_BOUND": return EntityType.FACE_BOUND;
-                case "ADVANCED_FACE":
-                case "FACE_SURFACE": return EntityType.FACE;
-                case "OPEN_SHELL":
-                case "CLOSED_SHELL": return EntityType.SHELL;
-                case "SHELL_BASED_SURFACE_MODEL": return EntityType.SHELL_MODEL;
-                case "MANIFOLD_SURFACE_SHAPE_REPRESENTATION": return EntityType.MANIFOLD_SHAPE;
-                case "VERTEX_POINT": return EntityType.VERTEX_POINT;
-                case "SURFACE_CURVE": return EntityType.SURFACE_CURVE;
-                case "EDGE_CURVE": return EntityType.EDGE_CURVE;
-                case "ORIENTED_EDGE": return EntityType.ORIENTED_EDGE;
-                case "VECTOR": return EntityType.VECTOR;
-                case "LINE": return EntityType.LINE;
-                default:
-                    // Try direct enum parse as fallback if token matches an enum name
-                    if (Enum.TryParse<EntityType>(t, out var et)) return et;
-                    throw new NotSupportedException($"Unsupported STEP entity type: {token}");
-            }
+                "CARTESIAN_POINT" => EntityType.CARTESIAN_POINT,
+                "DIRECTION" => EntityType.DIRECTION,
+                "AXIS2_PLACEMENT_3D" => EntityType.AXIS2_PLACEMENT_3D,
+                "PLANE" => EntityType.PLANE,
+                "EDGE_LOOP" => EntityType.EDGE_LOOP,
+                "FACE_BOUND" or "FACE_OUTER_BOUND" => EntityType.FACE_BOUND,
+                "ADVANCED_FACE" or "FACE_SURFACE" => EntityType.FACE,
+                "OPEN_SHELL" or "CLOSED_SHELL" => EntityType.SHELL,
+                "SHELL_BASED_SURFACE_MODEL" => EntityType.SHELL_MODEL,
+                "MANIFOLD_SURFACE_SHAPE_REPRESENTATION" => EntityType.MANIFOLD_SHAPE,
+                "VERTEX_POINT" => EntityType.VERTEX_POINT,
+                "SURFACE_CURVE" => EntityType.SURFACE_CURVE,
+                "EDGE_CURVE" => EntityType.EDGE_CURVE,
+                "ORIENTED_EDGE" => EntityType.ORIENTED_EDGE,
+                "VECTOR" => EntityType.VECTOR,
+                "LINE" => EntityType.LINE,
+                _ => Enum.TryParse<EntityType>(token, out var et)
+                    ? et
+                    : throw new NotSupportedException($"Unsupported STEP entity type: {token}")
+            };
         }
     }
 }
