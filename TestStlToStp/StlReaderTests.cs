@@ -109,7 +109,7 @@ endsolid";
         [Test]
         public async Task TestConvert()
         {
-            int result = await STLReader.Convert("bucket.stl", "bucket.stp");
+            var result = await STLReader.Convert("bucket.stl", "bucket.stp");
             Assert.AreEqual(0, result);
         }
      }  
