@@ -49,12 +49,12 @@ StlStpConverter/
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd StlToStp
+   cd StlStpConverter
    ```
 
 2. Open the solution:
    ```bash
-   StlToStp.sln
+   StlStpConverter.sln
    ```
 
 3. Build the solution:
