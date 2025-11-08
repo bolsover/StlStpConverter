@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StlToStp", "StlToStp\StlToStp.csproj", "{0D8D713C-A344-4DC6-8CB1-6790E72A7E96}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StlStpConverter", "StlStpConverter\StlStpConverter.csproj", "{0D8D713C-A344-4DC6-8CB1-6790E72A7E96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestStlToStp", "TestStlToStp\TestStlToStp.csproj", "{17048E5D-B4D6-4F04-9AF6-AE9985E65309}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestStlStpConverter", "TestStlStpConverter\TestStlStpConverter.csproj", "{17048E5D-B4D6-4F04-9AF6-AE9985E65309}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
