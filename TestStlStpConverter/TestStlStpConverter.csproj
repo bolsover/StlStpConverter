@@ -59,9 +59,6 @@
       </ProjectReference>
     </ItemGroup>
     <ItemGroup>
-      <Content Include="Geneva.stl">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <Content Include="Pencil Case.stl">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
