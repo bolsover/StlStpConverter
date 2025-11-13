@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "StlStpConverter"
-#define MyAppVersion "1.0"
+#define MyAppVersion "2.0"
 #define MyAppPublisher "David Bolsover"
 #define MyAppURL "https://github.com/bolsover/StlStpConverter"
 
@@ -34,23 +34,27 @@ ArchitecturesInstallIn64BitMode=x64os
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Types]
+Name: "alibre"; Description: "Alibre Add-on and Converter Executable"
+Name: "converter"; Description: "Converter Executable" 
+
+
+[Components]
+Name: "alibre"; Description: "Alibre Add-on"; Types: alibre converter;
+Name: "converter"; Description: "Converter Executable"; Types: converter;
+
+
 [Files]
-;Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Debug\nexus.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\StlStpConverter.exe"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\AlibreImportStlAsStep.adc"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\AlibreImportStlAsStep.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\stltostp.exe"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\test.bat"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\test.stl"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\nexus.ico"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\concrt140.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\msvcp140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\msvcp140_2.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\msvcp140_atomic_wait.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\msvcp140_codecvt_ids.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\vcruntime140.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "D:\02_Repository\02_Bolsover\AlibreImportStlAsStep\AlibreImportStlAsStep\bin\Release\net481\vcruntime140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\Microsoft.Bcl.HashCode.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\StlStpConverter.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\System.Buffers.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\System.Numerics.Vectors.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\AlibreStlStpConverter\bin\Release\3DPrint.ico"; DestDir: "{app}"; Flags: ignoreversion; Components: alibre converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\AlibreStlStpConverter\bin\Release\3DPrint.svg"; DestDir: "{app}"; Flags: ignoreversion; Components: alibre converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\AlibreStlStpConverter\bin\Release\AlibreStlStpConverter.adc"; DestDir: "{app}"; Flags: ignoreversion; Components: alibre converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\AlibreStlStpConverter\bin\Release\AlibreStlStpConverter.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: alibre converter;
+Source: "D:\02_Repository\02_Bolsover\StlStpConverter\AlibreStlStpConverter\bin\Release\nexus.ico"; DestDir: "{app}"; Flags: ignoreversion; Components: alibre converter;
+
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

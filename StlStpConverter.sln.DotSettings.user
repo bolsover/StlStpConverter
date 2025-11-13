@@ -25,5 +25,7 @@
     &lt;TestId&gt;NUnit3x::17048E5D-B4D6-4F04-9AF6-AE9985E65309::.NETFramework,Version=v4.8.1::TestStlToStp.Program&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::17048E5D-B4D6-4F04-9AF6-AE9985E65309::.NETFramework,Version=v4.8.1::TestStlToStp.TriangleTests.Triangles&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::17048E5D-B4D6-4F04-9AF6-AE9985E65309::.NETFramework,Version=v4.8.1::TestStlToStp.TriangleTests.SeparateBodies&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::17048E5D-B4D6-4F04-9AF6-AE9985E65309::.NETFramework,Version=v4.8.1::TestStlToStp.TriangleTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::17048E5D-B4D6-4F04-9AF6-AE9985E65309::.NETFramework,Version=v4.8.1::TestStlToStp.SplitteratorTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

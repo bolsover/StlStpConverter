@@ -50,7 +50,7 @@
     <ItemGroup>
         <Compile Include="StlStpConverterTests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Triangle.cs" />
+        <Compile Include="SplitteratorTests.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\StlStpConverter\StlStpConverter.csproj">
@@ -59,6 +59,9 @@
       </ProjectReference>
     </ItemGroup>
     <ItemGroup>
+      <Content Include="Geneva.stl">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <Content Include="Pencil Case.stl">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
