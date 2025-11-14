@@ -22,8 +22,8 @@ DefaultGroupName={#MyAppName}
 ;LicenseFile=D:\Repository\Jetbrains\Bolsover\AlibreExportOpen\Copyright and License.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\bin\Release\Setup
-OutputBaseFilename=StlStpConverter
+OutputDir=D:\02_Repository\02_Bolsover\StlStpConverter\Setup
+OutputBaseFilename={#MyAppName}
 SetupIconFile=D:\02_Repository\02_Bolsover\StlStpConverter\StlStpConverter\nexus.ico
 Compression=lzma
 SolidCompression=yes
