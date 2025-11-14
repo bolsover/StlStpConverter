@@ -5,20 +5,24 @@ using System.IO;
 
 namespace Bolsover.Converter
 {
-    public class Vector : Entity
+    public class Vector : IEntity
     {
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         private double Length { get; }
         private Direction Dir { get; }
 
 
-        public Vector(List<Entity> entityList, Direction dirIn, double lenIn) : base(entityList)
+        public Vector(int id, Direction dirIn, double lenIn)
         {
+            Id = id;
             Dir = dirIn;
             Length = lenIn;
         }
 
         // Serialize method
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             writer.WriteLine(
                 $"#{Id} = VECTOR('{Label}', #{Dir.Id}, {Length.ToString("F10", CultureInfo.InvariantCulture)});");

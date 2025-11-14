@@ -4,21 +4,25 @@ using System.IO;
 
 namespace Bolsover.Converter
 {
-    public class Line : Entity
+    public class Line : IEntity
     {
-        private Point Point { get; }
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
+        private CartesianPoint CartesianPoint { get; }
         private Vector Vector { get; }
 
 
-        public Line(List<Entity> entityList, Point pointIn, Vector vectorIn) : base(entityList)
+        public Line(int id, CartesianPoint cartesianPointIn, Vector vectorIn)
         {
-            Point = pointIn;
+            Id = id;
+            CartesianPoint = cartesianPointIn;
             Vector = vectorIn;
         }
 
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
-            writer.WriteLine($"#{Id} = LINE('{Label}', #{Point.Id}, #{Vector.Id});");
+            writer.WriteLine($"#{Id} = LINE('{Label}', #{CartesianPoint.Id}, #{Vector.Id});");
         }
     }
 }

@@ -5,21 +5,25 @@ using System.Linq;
 
 namespace Bolsover.Converter
 {
-    public class Face : Entity
+    public class Face : IEntity
     {
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         private List<FaceBound> FaceBounds { get; }
         private bool Dir { get; }
         private Plane Plane { get; }
 
 
-        public Face(List<Entity> entityList, List<FaceBound> faceBoundsIn, Plane planeIn, bool dirIn) : base(entityList)
+        public Face(int id, List<FaceBound> faceBoundsIn, Plane planeIn, bool dirIn)
         {
+            Id = id;
             FaceBounds = faceBoundsIn;
             Dir = dirIn;
             Plane = planeIn;
         }
 
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             writer.Write($"#{Id} = ADVANCED_FACE('{Label}', (");
             for (var i = 0; i < FaceBounds.Count; i++)

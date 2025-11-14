@@ -11,7 +11,16 @@ namespace Bolsover.Converter
         /// <summary>
         /// List of STEP entities.
         /// </summary>
-        private List<Entity> Entities { get; } = new();
+        private List<IEntity> Entities { get; } = new();
+
+        // ID assignment and registration
+        private int _nextId = 1;
+        private int NextId() => _nextId++;
+        private T Register<T>(T e) where T : IEntity
+        {
+            Entities.Add(e);
+            return e;
+        }
 
 
        /// <summary>
@@ -69,98 +78,98 @@ namespace Bolsover.Converter
         /// <returns></returns>
         private EdgeCurve CreateEdgeCurve(Vertex vertex1, Vertex vertex2, bool dir, double tol)
         {
-            var linePoint1 = GetOrCreatePoint(_pointCache, vertex1.Point.X, vertex1.Point.Y, vertex1.Point.Z, tol);
+            var linePoint1 = GetOrCreatePoint(_pointCache, vertex1.CartesianPoint.X, vertex1.CartesianPoint.Y, vertex1.CartesianPoint.Z, tol);
 
             var (vx, vy, vz, _) = CalculateDirection(
-                new[] { vertex1.Point.X, vertex1.Point.Y, vertex1.Point.Z },
-                new[] { vertex2.Point.X, vertex2.Point.Y, vertex2.Point.Z }
+                new[] { vertex1.CartesianPoint.X, vertex1.CartesianPoint.Y, vertex1.CartesianPoint.Z },
+                new[] { vertex2.CartesianPoint.X, vertex2.CartesianPoint.Y, vertex2.CartesianPoint.Z }
             );
 
             var lineDir1 = GetOrCreateDirection(_directionCache, vx, vy, vz, tol);
-            var lineVector1 = new Vector(Entities, lineDir1, 1.0);
-            var line1 = new Line(Entities, linePoint1, lineVector1);
-            var surfCurve1 = new SurfaceCurve(Entities, line1);
-            return new EdgeCurve(Entities, vertex1, vertex2, surfCurve1, dir);
+            var lineVector1 = Register(new Vector(NextId(), lineDir1, 1.0));
+            var line1 = Register(new Line(NextId(), linePoint1, lineVector1));
+            var surfCurve1 = Register(new SurfaceCurve(NextId(), line1));
+            return Register(new EdgeCurve(NextId(), vertex1, vertex2, surfCurve1, dir));
         }
 
         /// <summary>
         /// Caches for STEP entities.
         /// </summary>
         private Dictionary<DirectionKey, Direction> _directionCache = new();
-        private Dictionary<PointKey, Point> _pointCache = new();
-        private Dictionary<PointKey, Vertex> _vertexCache = new();
+        private Dictionary<CartesianPointKey, CartesianPoint> _pointCache = new();
+        private Dictionary<CartesianPointKey, Vertex> _vertexCache = new();
         private Dictionary<EdgeKey, EdgeCurve> _edgeCache = new();
 
         /// <summary>
-        /// Build a triangular body from a list of triangles
+        /// Build a body from a list of triangles
         /// </summary>
-        /// <param name="tris"></param>
-        /// <param name="tol"></param>
+        /// <param name="triangleList"></param>
+        /// <param name="tolerance"></param>
         /// <param name="mergedEdgeCount"></param>
 
-        public void BuildTriBody(List<double> tris, double tol, ref int mergedEdgeCount)
+        public void BuildTriangularBody(List<double> triangleList, double tolerance, ref int mergedEdgeCount)
         {
             _directionCache = new Dictionary<DirectionKey, Direction>();
-            _pointCache = new Dictionary<PointKey, Point>();
-            _vertexCache = new Dictionary<PointKey, Vertex>(capacity: tris.Count / 3);
-            _edgeCache = new Dictionary<EdgeKey, EdgeCurve>(capacity: tris.Count);
+            _pointCache = new Dictionary<CartesianPointKey, CartesianPoint>();
+            _vertexCache = new Dictionary<CartesianPointKey, Vertex>(capacity: triangleList.Count / 3);
+            _edgeCache = new Dictionary<EdgeKey, EdgeCurve>(capacity: triangleList.Count);
 
-            var originPoint = GetOrCreatePoint(_pointCache, 0.0, 0.0, 0.0, tol);
-            var direction1 = GetOrCreateDirection(_directionCache, 0.0, 0.0, 1.0, tol);
-            var direction2 = GetOrCreateDirection(_directionCache, 1.0, 0.0, 0.0, tol);
-            var baseCsys = new Csys3D(Entities, direction1, direction2, originPoint);
+            var originPoint = GetOrCreatePoint(_pointCache, 0.0, 0.0, 0.0, tolerance);
+            var direction1 = GetOrCreateDirection(_directionCache, 0.0, 0.0, 1.0, tolerance);
+            var direction2 = GetOrCreateDirection(_directionCache, 1.0, 0.0, 0.0, tolerance);
+            var axisPlacement3D = Register(new AxisPlacement3D(NextId(), direction1, direction2, originPoint));
             var faces = new List<Face>();
 
-            for (var i = 0; i < tris.Count / 9; i++)
+            for (var i = 0; i < triangleList.Count / 9; i++)
             {
-                double[] p0 = { tris[i * 9 + 0], tris[i * 9 + 1], tris[i * 9 + 2] };
-                double[] p1 = { tris[i * 9 + 3], tris[i * 9 + 4], tris[i * 9 + 5] };
-                double[] p2 = { tris[i * 9 + 6], tris[i * 9 + 7], tris[i * 9 + 8] };
+                double[] p0 = { triangleList[i * 9 + 0], triangleList[i * 9 + 1], triangleList[i * 9 + 2] };
+                double[] p1 = { triangleList[i * 9 + 3], triangleList[i * 9 + 4], triangleList[i * 9 + 5] };
+                double[] p2 = { triangleList[i * 9 + 6], triangleList[i * 9 + 7], triangleList[i * 9 + 8] };
 
                 // Compute directions
                 var (d0X, d0Y, d0Z, dist0) = CalculateDirection(p0, p1);
-                if (dist0 < tol) continue;
+                if (dist0 < tolerance) continue;
                 double[] d0 = { d0X, d0Y, d0Z };
 
                 var (d1X, d1Y, d1Z, dist1) = CalculateDirection(p0, p2);
-                if (dist1 < tol) continue;
+                if (dist1 < tolerance) continue;
                 double[] d1 = { d1X, d1Y, d1Z };
 
                 // Cross-product for normal
                 var d2 = CrossProduct(d0, d1);
                 NormalizeVector(d2);
 
-                var vert1 = GetOrCreateVertex(_vertexCache, p0[0], p0[1], p0[2], tol);
-                var vert2 = GetOrCreateVertex(_vertexCache, p1[0], p1[1], p1[2], tol);
-                var vert3 = GetOrCreateVertex(_vertexCache, p2[0], p2[1], p2[2], tol);
+                var vert1 = GetOrCreateVertex(_vertexCache, p0[0], p0[1], p0[2], tolerance);
+                var vert2 = GetOrCreateVertex(_vertexCache, p1[0], p1[1], p1[2], tolerance);
+                var vert3 = GetOrCreateVertex(_vertexCache, p2[0], p2[1], p2[2], tolerance);
 
-                var edgeCurve1 = GetOrCreateEdge(_edgeCache, vert1, vert2, tol, out var edgeDir1, ref mergedEdgeCount);
-                var edgeCurve2 = GetOrCreateEdge(_edgeCache, vert2, vert3, tol, out var edgeDir2, ref mergedEdgeCount);
-                var edgeCurve3 = GetOrCreateEdge(_edgeCache, vert3, vert1, tol, out var edgeDir3, ref mergedEdgeCount);
+                var edgeCurve1 = GetOrCreateEdge(_edgeCache, vert1, vert2, tolerance, out var edgeDir1, ref mergedEdgeCount);
+                var edgeCurve2 = GetOrCreateEdge(_edgeCache, vert2, vert3, tolerance, out var edgeDir2, ref mergedEdgeCount);
+                var edgeCurve3 = GetOrCreateEdge(_edgeCache, vert3, vert1, tolerance, out var edgeDir3, ref mergedEdgeCount);
 
                 var orientedEdges = new List<OrientedEdge>
                 {
-                    new(Entities, edgeCurve1, edgeDir1),
-                    new(Entities, edgeCurve2, edgeDir2),
-                    new(Entities, edgeCurve3, edgeDir3)
+                    Register(new OrientedEdge(NextId(), edgeCurve1, edgeDir1)),
+                    Register(new OrientedEdge(NextId(), edgeCurve2, edgeDir2)),
+                    Register(new OrientedEdge(NextId(), edgeCurve3, edgeDir3))
                 };
 
-                // Plane and csys
-                var planePoint = GetOrCreatePoint(_pointCache, p0[0], p0[1], p0[2], tol);
-                var planeDir1 = GetOrCreateDirection(_directionCache, d2[0], d2[1], d2[2], tol);
-                var planeDir2 = GetOrCreateDirection(_directionCache, d0[0], d0[1], d0[2], tol);
-                var planeCsys = new Csys3D(Entities, planeDir1, planeDir2, planePoint);
-                var plane = new Plane(Entities, planeCsys);
-                var edgeLoop = new EdgeLoop(Entities, orientedEdges);
-                var faceBounds = new List<FaceBound> { new(Entities, edgeLoop, true) };
-                faces.Add(new Face(Entities, faceBounds, plane, true));
+                // Plane and axisPlacement
+                var planePoint = GetOrCreatePoint(_pointCache, p0[0], p0[1], p0[2], tolerance);
+                var planeDir1 = GetOrCreateDirection(_directionCache, d2[0], d2[1], d2[2], tolerance);
+                var planeDir2 = GetOrCreateDirection(_directionCache, d0[0], d0[1], d0[2], tolerance);
+                var axisPlacementIn = Register(new AxisPlacement3D(NextId(), planeDir1, planeDir2, planePoint));
+                var plane = Register(new Plane(NextId(), axisPlacementIn));
+                var edgeLoop = Register(new EdgeLoop(NextId(), orientedEdges));
+                var faceBounds = new List<FaceBound> { Register(new FaceBound(NextId(), edgeLoop, true)) };
+                faces.Add(Register(new Face(NextId(), faceBounds, plane, true)));
             }
 
-            var shell = new Shell(Entities, faces);
+            var shell = Register(new Shell(NextId(), faces));
             var shells = new List<Shell> { shell };
-            var shellModel = new ShellModel(Entities, shells);
+            var shellModel = Register(new ShellModel(NextId(), shells));
             // ReSharper disable once ObjectCreationAsStatement
-            new ManifoldShape(Entities, baseCsys, shellModel);
+            Register(new ManifoldShape(NextId(), axisPlacement3D, shellModel));
         }
 
         /// <summary>
@@ -178,14 +187,14 @@ namespace Bolsover.Converter
             var pk = new DirectionKey(x, y, z, tol);
             if (directionCache.TryGetValue(pk, out var d)) return d;
             // Create a single unique Direction
-            d = new Direction(Entities, x, y, z);
+            d = Register(new Direction(NextId(), x, y, z));
             directionCache.Add(pk, d);
 
             return d;
         }
 
         /// <summary>
-        /// Get an existing point or create a new one.
+        /// Get an existing cartesianPoint or create a new one.
         /// </summary>
         /// <param name="pointCache"></param>
         /// <param name="x"></param>
@@ -193,12 +202,12 @@ namespace Bolsover.Converter
         /// <param name="z"></param>
         /// <param name="tol"></param>
         /// <returns></returns>
-        private Point GetOrCreatePoint(Dictionary<PointKey, Point> pointCache, double x, double y, double z, double tol)
+        private CartesianPoint GetOrCreatePoint(Dictionary<CartesianPointKey, CartesianPoint> pointCache, double x, double y, double z, double tol)
         {
-            var pk = new PointKey(x, y, z, tol);
+            var pk = new CartesianPointKey(x, y, z, tol);
             if (pointCache.TryGetValue(pk, out var p)) return p;
-            // Create a single Point instance per unique position
-            p = new Point(Entities, x, y, z);
+            // Create a single CartesianPoint instance per unique position
+            p = Register(new CartesianPoint(NextId(), x, y, z));
             pointCache.Add(pk, p);
             return p;
         }
@@ -212,14 +221,14 @@ namespace Bolsover.Converter
         /// <param name="z"></param>
         /// <param name="tol"></param>
         /// <returns></returns>
-        private Vertex GetOrCreateVertex(Dictionary<PointKey, Vertex> vertexCache, double x, double y, double z,
+        private Vertex GetOrCreateVertex(Dictionary<CartesianPointKey, Vertex> vertexCache, double x, double y, double z,
             double tol)
         {
-            var pk = new PointKey(x, y, z, tol);
+            var pk = new CartesianPointKey(x, y, z, tol);
             if (vertexCache.TryGetValue(pk, out var v)) return v;
-            // Create a single Point instance per unique position
+            // Create a single CartesianPoint instance per unique position
             var p = GetOrCreatePoint(_pointCache, x, y, z, tol);
-            v = new Vertex(Entities, p);
+            v = Register(new Vertex(NextId(), p));
             vertexCache.Add(pk, v);
             return v;
         }
@@ -238,8 +247,8 @@ namespace Bolsover.Converter
         private EdgeCurve GetOrCreateEdge(Dictionary<EdgeKey, EdgeCurve> edgeCache, Vertex v1, Vertex v2, double tol,
             out bool edgeDir, ref int mergeCount)
         {
-            var pk1 = new PointKey(v1.Point.X, v1.Point.Y, v1.Point.Z, tol);
-            var pk2 = new PointKey(v2.Point.X, v2.Point.Y, v2.Point.Z, tol);
+            var pk1 = new CartesianPointKey(v1.CartesianPoint.X, v1.CartesianPoint.Y, v1.CartesianPoint.Z, tol);
+            var pk2 = new CartesianPointKey(v2.CartesianPoint.X, v2.CartesianPoint.Y, v2.CartesianPoint.Z, tol);
 
             var keyF = new EdgeKey(pk1, pk2); // forward
             if (edgeCache.TryGetValue(keyF, out var eF))
@@ -294,13 +303,13 @@ namespace Bolsover.Converter
     }
 
    
-    internal readonly struct PointKey : IEquatable<PointKey>
+    internal readonly struct CartesianPointKey : IEquatable<CartesianPointKey>
     {
         private readonly long _x;
         private readonly long _y;
         private readonly long _z;
 
-        public PointKey(double x, double y, double z, double tol)
+        public CartesianPointKey(double x, double y, double z, double tol)
         {
             long Q(double v) => (long)Math.Round(v / tol);
             _x = Q(x);
@@ -308,18 +317,18 @@ namespace Bolsover.Converter
             _z = Q(z);
         }
 
-        public bool Equals(PointKey other) => _x == other._x && _y == other._y && _z == other._z;
-        public override bool Equals(object o) => o is PointKey k && Equals(k);
+        public bool Equals(CartesianPointKey other) => _x == other._x && _y == other._y && _z == other._z;
+        public override bool Equals(object o) => o is CartesianPointKey k && Equals(k);
         public override int GetHashCode() => HashCode.Combine(_x, _y, _z);
     }
 
     internal readonly struct EdgeKey : IEquatable<EdgeKey>
     {
         // Directed edge key; use unordered for lookups by trying reversed too
-        private readonly PointKey _a;
-        private readonly PointKey _b;
+        private readonly CartesianPointKey _a;
+        private readonly CartesianPointKey _b;
 
-        public EdgeKey(in PointKey a, in PointKey b)
+        public EdgeKey(in CartesianPointKey a, in CartesianPointKey b)
         {
             _a = a;
             _b = b;

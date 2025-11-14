@@ -6,22 +6,26 @@ using Bolsover.Converter;
 
 namespace Bolsover.Converter
 {
-    public class ManifoldShape : Entity
+    public class ManifoldShape : IEntity
     {
-        private Csys3D Csys { get; }
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
+        private AxisPlacement3D AxisPlacement { get; }
         private ShellModel ShellModel { get; }
 
 
-        public ManifoldShape(List<Entity> entityList, Csys3D csysIn, ShellModel shellModelIn) : base(entityList)
+        public ManifoldShape(int id, AxisPlacement3D axisPlacementIn, ShellModel shellModelIn)
         {
-            Csys = csysIn;
+            Id = id;
+            AxisPlacement = axisPlacementIn;
             ShellModel = shellModelIn;
         }
 
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             writer.WriteLine(
-                $"#{Id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('{Label}', (#{Csys.Id}, #{ShellModel.Id}));");
+                $"#{Id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('{Label}', (#{AxisPlacement.Id}, #{ShellModel.Id}));");
         }
     }
 }

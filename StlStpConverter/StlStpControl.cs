@@ -152,7 +152,7 @@ namespace Bolsover
                 var stepWriter = new StepWriter();
                 var mergedEdgeCount = 0;
                 token.ThrowIfCancellationRequested();
-                stepWriter.BuildTriBody(nodes, tol, ref mergedEdgeCount);
+                stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);
                 token.ThrowIfCancellationRequested();
 
                 _converterParams.Message = $"Writing STEP: {Path.GetFileName(_converterParams.OutFile)}...";

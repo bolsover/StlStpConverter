@@ -64,19 +64,18 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ConverterParams.cs" />
-        <Compile Include="Converter\Csys3D.cs" />
+        <Compile Include="Converter\AxisPlacement3D.cs" />
         <Compile Include="Converter\Direction.cs" />
         <Compile Include="Converter\EdgeCurve.cs" />
         <Compile Include="Converter\EdgeLoop.cs" />
-        <Compile Include="Converter\Entity.cs" />
+        <Compile Include="Converter\IEntity.cs" />
         <Compile Include="Converter\Face.cs" />
         <Compile Include="Converter\FaceBound.cs" />
-        <Compile Include="Converter\FileHelpers.cs" />
         <Compile Include="Converter\Line.cs" />
         <Compile Include="Converter\ManifoldShape.cs" />
         <Compile Include="Converter\OrientedEdge.cs" />
         <Compile Include="Converter\Plane.cs" />
-        <Compile Include="Converter\Point.cs" />
+        <Compile Include="Converter\CartesianPoint.cs" />
         <Compile Include="Converter\Shell.cs" />
         <Compile Include="Converter\ShellModel.cs" />
         <Compile Include="Converter\StepWriter.cs" />

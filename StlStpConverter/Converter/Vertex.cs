@@ -3,20 +3,23 @@ using System.IO;
 
 namespace Bolsover.Converter
 {
-    public class Vertex : Entity
+    public class Vertex : IEntity
     {
-        public Point Point { get; }
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+        public CartesianPoint CartesianPoint { get; }
 
 
-        public Vertex(List<Entity> entityList, Point pointIn) : base(entityList)
+        public Vertex(int id, CartesianPoint cartesianPointIn)
         {
-            Point = pointIn;
+            Id = id;
+            CartesianPoint = cartesianPointIn;
         }
 
         // Serialize method
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
-            writer.WriteLine($"#{Id} = VERTEX_POINT('{Label}', #{Point.Id});");
+            writer.WriteLine($"#{Id} = VERTEX_POINT('{Label}', #{CartesianPoint.Id});");
         }
     }
 }

@@ -5,19 +5,23 @@ using System.Linq;
 
 namespace Bolsover.Converter
 {
-    public class Shell : Entity
+    public class Shell : IEntity
     {
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         private List<Face> Faces { get; }
         private bool IsOpen { get; }
 
 
-        public Shell(List<Entity> entityList, List<Face> faces) : base(entityList)
+        public Shell(int id, List<Face> faces)
         {
+            Id = id;
             Faces = faces;
             IsOpen = true;
         }
 
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             writer.Write($"#{Id} = {(IsOpen ? "OPEN_SHELL" : "CLOSED_SHELL")}('{Label}',(");
             WriteFaceReferences(writer);

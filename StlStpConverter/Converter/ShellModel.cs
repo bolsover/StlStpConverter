@@ -5,17 +5,21 @@ using System.Linq;
 
 namespace Bolsover.Converter
 {
-    public class ShellModel : Entity
+    public class ShellModel : IEntity
     {
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         private List<Shell> Shells { get; }
 
 
-        public ShellModel(List<Entity> entityList, List<Shell> shellsIn) : base(entityList)
+        public ShellModel(int id, List<Shell> shellsIn)
         {
+            Id = id;
             Shells = shellsIn;
         }
 
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             var shellIds = SerializeShellIds();
             writer.WriteLine($"#{Id} = SHELL_BASED_SURFACE_MODEL('{Label}', ({shellIds}));");

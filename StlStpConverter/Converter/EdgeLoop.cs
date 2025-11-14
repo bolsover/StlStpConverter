@@ -5,18 +5,22 @@ using System.Linq;
 
 namespace Bolsover.Converter
 {
-    public class EdgeLoop : Entity
+    public class EdgeLoop : IEntity
     {
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         private List<OrientedEdge> OrientedEdges { get; }
 
 
-        public EdgeLoop(List<Entity> entityList, List<OrientedEdge> edgesIn) : base(entityList)
+        public EdgeLoop(int id, List<OrientedEdge> edgesIn)
         {
+            Id = id;
             OrientedEdges = edgesIn;
         }
 
         // Serialize method
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
             writer.Write($"#{Id} = EDGE_LOOP('{Label}', (");
             writer.Write(SerializeEdgeReferences());

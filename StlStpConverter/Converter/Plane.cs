@@ -6,23 +6,23 @@ using Bolsover.Converter;
 
 namespace Bolsover.Converter
 {
-    public class Plane : Entity
+    public class Plane : IEntity
     {
-        private Csys3D Csys { get; }
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+        private AxisPlacement3D AxisPlacement { get; }
 
-        // Constructor with optional parameter
-        public Plane(List<Entity> entityList, Csys3D csysIn = null) : base(entityList)
+        // Constructor with required parameter
+        public Plane(int id, AxisPlacement3D axisPlacementIn)
         {
-            Csys = csysIn;
+            Id = id;
+            AxisPlacement = axisPlacementIn ?? throw new InvalidOperationException("AxisPlacement is required");
         }
 
         // Serialize method
-        public override void Serialize(StreamWriter writer)
+        public void Serialize(StreamWriter writer)
         {
-            if (Csys == null)
-                throw new InvalidOperationException("Cannot serialize Plane without a valid Csys.");
-
-            writer.WriteLine($"#{Id} = PLANE('{Label}',#{Csys.Id});");
+            writer.WriteLine($"#{Id} = PLANE('{Label}',#{AxisPlacement.Id});");
         }
     }
 }
