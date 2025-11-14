@@ -33,6 +33,7 @@ namespace Bolsover
             aboutText = aboutText + "\nCopyright © 2025, David Bolsover ";
             aboutText = aboutText + "\nInspired by original work";
             aboutText = aboutText + "\nCopyright © 2018, slugdev";
+            aboutText = aboutText + "\nOriginal and modifications are licensed under the BSD-4-Clause License";
             MessageBox.Show(aboutText, "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
