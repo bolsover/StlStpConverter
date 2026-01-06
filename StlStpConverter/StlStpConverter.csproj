@@ -90,6 +90,7 @@
         <Compile Include="Converter\Vector.cs" />
         <Compile Include="Converter\Vertex.cs" />
         <Compile Include="Decimator\Face.cs" />
+        <Compile Include="Decimator\StlBinaryExporter.cs" />
         <Compile Include="Decimator\StlDecimator.cs" />
         <Compile Include="Decimator\StlExporter.cs" />
         <Compile Include="Decimator\StlLoader.cs" />
@@ -156,6 +157,9 @@
       <Content Include="information.me">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Import\" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

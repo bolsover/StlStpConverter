@@ -10,16 +10,16 @@ namespace Bolsover.Decimator
 
     public class StlSimplifier
     {
-        public List<Vertex> Vertices = new List<Vertex>();
-        public List<Face> Faces = new List<Face>();
-        private HashSet<(int, int)> boundaryEdges = new HashSet<(int, int)>();
-        private SortedList<float, List<(int, int)>> edgeQueue = new SortedList<float, List<(int, int)>>();
-        private HashSet<(int, int)> sharpEdges = new HashSet<(int, int)>();
+        public readonly List<Vertex> Vertices = new();
+        public readonly List<Face> Faces = new();
+        private readonly HashSet<(int, int)> boundaryEdges = new();
+        private readonly SortedList<float, List<(int, int)>> edgeQueue = new();
+        private readonly HashSet<(int, int)> sharpEdges = new();
 
 
         public void Simplify(int targetFaceCount)
         {
-            float sharpAngleThreshold = 30f;
+            const float sharpAngleThreshold = 30f;
             IdentifyBoundaryEdges();
             ComputeQuadrics();
             EnqueueAllEdges();
@@ -37,14 +37,14 @@ namespace Bolsover.Decimator
             }
         }
         
-        private void IdentifySharpEdges(float angleThresholdDegrees = 30f) {
+        private void IdentifySharpEdges(float angleThresholdDegrees) {
             var edgeToFaces = new Dictionary<(int, int), List<int>>();
 
-            for (int i = 0; i < Faces.Count; i++) {
+            for (var i = 0; i < Faces.Count; i++) {
                 var face = Faces[i];
-                for (int j = 0; j < 3; j++) {
-                    int a = face.Vertices[j];
-                    int b = face.Vertices[(j + 1) % 3];
+                for (var j = 0; j < 3; j++) {
+                    var a = face.Vertices[j];
+                    var b = face.Vertices[(j + 1) % 3];
                     var edge = (Math.Min(a, b), Math.Max(a, b));
                     if (!edgeToFaces.ContainsKey(edge))
                         edgeToFaces[edge] = new List<int>();
@@ -58,7 +58,7 @@ namespace Bolsover.Decimator
 
                 var n1 = ComputeFaceNormal(Faces[faces[0]]);
                 var n2 = ComputeFaceNormal(Faces[faces[1]]);
-                double angle = Math.Acos(Clamp(Vector3.Dot(n1, n2), -1f, 1f)) * (180f / (float)Math.PI);
+                var angle = Math.Acos(Clamp(Vector3.Dot(n1, n2), -1f, 1f)) * (180f / (float)Math.PI);
 
                 if (angle > angleThresholdDegrees) {
                     sharpEdges.Add(kvp.Key);
@@ -71,8 +71,8 @@ namespace Bolsover.Decimator
             return boundaryEdges.Contains(edge) || sharpEdges.Contains(edge);
         }
 
-        
-        public static double Clamp(double value, double min, double max)
+
+        private static double Clamp(double value, double min, double max)
         {
             // Ensure the value is not less than the minimum
             if (value < min)
@@ -80,15 +80,10 @@ namespace Bolsover.Decimator
                 return min;
             }
             // Ensure the value is not greater than the maximum
-            else if (value > max)
-            {
-                return max;
-            }
-            // Otherwise, return the original value
-            else
-            {
-                return value;
-            }
+
+            return value > max ? max :
+                // Otherwise, return the original value
+                value;
         }
 
         private Vector3 ComputeFaceNormal(Face face) {
@@ -108,7 +103,7 @@ namespace Bolsover.Decimator
                 var v2 = Vertices[face.Vertices[2]].Position;
 
                 var normal = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
-                float d = -Vector3.Dot(normal, v0);
+                var d = -Vector3.Dot(normal, v0);
                 var plane = new Vector4(normal, d);
                 var q = OuterProduct(plane, plane);
 
@@ -125,10 +120,10 @@ namespace Bolsover.Decimator
 
             foreach (var face in Faces)
             {
-                for (int i = 0; i < 3; i++)
+                for (var i = 0; i < 3; i++)
                 {
-                    int a = face.Vertices[i];
-                    int b = face.Vertices[(i + 1) % 3];
+                    var a = face.Vertices[i];
+                    var b = face.Vertices[(i + 1) % 3];
                     var edge = (Math.Min(a, b), Math.Max(a, b));
                     if (!edgeCount.ContainsKey(edge))
                         edgeCount[edge] = 0;
@@ -150,11 +145,11 @@ namespace Bolsover.Decimator
 
         private void EnqueueAllEdges()
         {
-            for (int i = 0; i < Vertices.Count; i++)
+            for (var i = 0; i < Vertices.Count; i++)
             {
-                foreach (int j in GetAdjacentVertices(i))
+                foreach (var j in GetAdjacentVertices(i))
                 {
-                    float cost = ComputeCollapseCost(i, j);
+                    var cost = ComputeCollapseCost(i, j);
                     EnqueueEdge(i, j, cost);
                 }
             }
@@ -196,10 +191,10 @@ namespace Bolsover.Decimator
             Vertices[v1].Position = newPos;
             Vertices[v1].Quadric += Vertices[v2].Quadric;
 
-            for (int i = Faces.Count - 1; i >= 0; i--)
+            for (var i = Faces.Count - 1; i >= 0; i--)
             {
                 var face = Faces[i];
-                for (int j = 0; j < 3; j++)
+                for (var j = 0; j < 3; j++)
                 {
                     if (face.Vertices[j] == v2) face.Vertices[j] = v1;
                 }

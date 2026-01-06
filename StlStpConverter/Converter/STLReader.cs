@@ -49,7 +49,7 @@ namespace Bolsover.Converter
                 // Heuristic: ASCII if starts with "solid" and LooksLikeAsciiAsync says true; else binary
                 if (firstWord == "solid")
                 {
-                    var looksAscii = await LooksLikeAsciiAsync(fileName, token).ConfigureAwait(false);
+                    var looksAscii = await LooksLikeAsciiAsync(fileName).ConfigureAwait(false);
                     if (looksAscii)
                     {
                         // Use your existing ASCII parser
@@ -94,8 +94,8 @@ namespace Bolsover.Converter
                 var hdrRead = await ReadExactlyAsync(fs, header, 0, 84, ct).ConfigureAwait(false);
                 if (hdrRead != 84) throw new EndOfStreamException("Short STL header");
 
-                uint tris = BitConverter.ToUInt32(header, 80);
-                long remainingBytes = (long)tris * TriBytes;
+                var tris = BitConverter.ToUInt32(header, 80);
+                var remainingBytes = (long)tris * TriBytes;
 
                 var result = new List<double>(checked((int)tris * 9)); // 9 coordinates per triangle
 
@@ -229,7 +229,7 @@ namespace Bolsover.Converter
         }
 
        
-        private static async Task<bool> LooksLikeAsciiAsync(string fileName, CancellationToken token)
+        private static async Task<bool> LooksLikeAsciiAsync(string fileName)
         {
             // Heuristic: ASCII STL should contain "facet" somewhere in the first few KB
             const int checkSize = 1024; // 1 KB

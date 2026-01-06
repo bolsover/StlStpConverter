@@ -1,0 +1,28 @@
+﻿STL -> STEP Converter — Usage Information
+----------------------------------
+
+Overview
+This utility converts STL files to STEP. It can also split multi‑body STL files into separate bodies before conversion.
+
+Quick Start
+1) Select an input .stl file.
+2) Select or enter an output .stp file path.
+3) (Optional) Enable "Split bodies" to separate connected components.
+4) Click Convert.
+
+Notes
+- When splitting is enabled, it is generally recommended to use a 
+  separate output directory for each model.
+- When splitting is enabled, individual body files are saved as
+  <base>_body_<n>.stl and converted to <base>_body_<n>.stp.
+  The original file is not modified.
+- When splitting and 'Split, convert, open directory' is enabled, the
+  resulting files are opened in the target directory.
+- When splitting is not enabled, and 'Open STL after conversion' is 
+  enabled, the resulting file is opened with the default application 
+  for .stl files.
+- Tolerance can be selected from the drop‑down if needed.
+  It is generally recommended to use the default value.    
+- Large STEP models may take time to open after conversion.
+
+

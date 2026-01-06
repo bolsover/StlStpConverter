@@ -34,7 +34,7 @@ namespace Bolsover.Splitterator
         /// <param name="token">Cancellation token.</param>
         /// <param name="progress">Optional textual progress reporter.</param>
         /// <returns>List of triangles parsed from the STL file.</returns>
-        public static async Task<List<Triangle>> ParseStlAsync(string path, CancellationToken token = default, IProgress<string> progress = null)
+        private static async Task<List<Triangle>> ParseStlAsync(string path, CancellationToken token = default, IProgress<string> progress = null)
         {
             var nodes = await StlReader.ReadStlAsync(path, token, progress).ConfigureAwait(false);
             return ConvertNodesToTriangles(nodes);
@@ -49,104 +49,51 @@ namespace Bolsover.Splitterator
             var triangles = new List<Triangle>(nodes == null ? 0 : nodes.Count / 9);
             if (nodes == null || nodes.Count < 9) return triangles;
 
-            for (int i = 0; i + 8 < nodes.Count; i += 9)
+            for (var i = 0; i + 8 < nodes.Count; i += 9)
             {
-                var tri = new Triangle();
-                tri.Vertices[0] = new Vector3((float)nodes[i],     (float)nodes[i + 1], (float)nodes[i + 2]);
-                tri.Vertices[1] = new Vector3((float)nodes[i + 3], (float)nodes[i + 4], (float)nodes[i + 5]);
-                tri.Vertices[2] = new Vector3((float)nodes[i + 6], (float)nodes[i + 7], (float)nodes[i + 8]);
+                var tri = new Triangle
+                {
+                    Vertices =
+                    {
+                        [0] = new Vector3((float)nodes[i],     (float)nodes[i + 1], (float)nodes[i + 2]),
+                        [1] = new Vector3((float)nodes[i + 3], (float)nodes[i + 4], (float)nodes[i + 5]),
+                        [2] = new Vector3((float)nodes[i + 6], (float)nodes[i + 7], (float)nodes[i + 8])
+                    }
+                };
                 triangles.Add(tri);
             }
 
             return triangles;
         }
 
-        // // Legacy local parsers retained for reference; no longer used by default code path.
-        // private static List<Triangle> ParseAsciiStl(Stream stream)
-        // {
-        //     var triangles = new List<Triangle>();
-        //     using var reader = new StreamReader(stream);
-        //     string line;
-        //     while ((line = reader.ReadLine()) != null)
-        //     {
-        //         if (line.Trim().StartsWith("facet normal"))
-        //         {
-        //             var triangle = new Triangle();
-        //             reader.ReadLine(); // outer loop
-        //             for (int v = 0; v < 3; v++)
-        //             {
-        //                 var parts = reader.ReadLine().Trim().Split(' ');
-        //                 triangle.Vertices[v] = new Vector3(
-        //                     float.Parse(parts[1]),
-        //                     float.Parse(parts[2]),
-        //                     float.Parse(parts[3])
-        //                 );
-        //             }
-        //
-        //             reader.ReadLine(); // endloop
-        //             reader.ReadLine(); // endfacet
-        //             triangles.Add(triangle);
-        //         }
-        //     }
-        //
-        //     return triangles;
-        // }
-        //
-        // private static List<Triangle> ParseBinaryStl(BinaryReader reader)
-        // {
-        //     reader.BaseStream.Seek(80, SeekOrigin.Begin); // skip header
-        //     uint triangleCount = reader.ReadUInt32();
-        //     var triangles = new List<Triangle>((int)triangleCount);
-        //
-        //     for (int i = 0; i < triangleCount; i++)
-        //     {
-        //         reader.ReadBytes(12); // normal vector
-        //         var triangle = new Triangle();
-        //         for (int v = 0; v < 3; v++)
-        //         {
-        //             triangle.Vertices[v] = new Vector3(
-        //                 reader.ReadSingle(),
-        //                 reader.ReadSingle(),
-        //                 reader.ReadSingle()
-        //             );
-        //         }
-        //
-        //         reader.ReadUInt16(); // attribute byte count
-        //         triangles.Add(triangle);
-        //     }
-        //
-        //     return triangles;
-        // }
-
-
-
         // --- Optimized topology helpers (vertex snapping variant) ---
         private readonly struct EdgeKey : IEquatable<EdgeKey>
         {
-            public readonly int A, B; // canonicalized so A <= B
+            private readonly int _a; // canonicalized so A <= B
+            private readonly int _b; // canonicalized so A <= B
 
             public EdgeKey(int u, int v)
             {
                 if (u <= v)
                 {
-                    A = u;
-                    B = v;
+                    _a = u;
+                    _b = v;
                 }
                 else
                 {
-                    A = v;
-                    B = u;
+                    _a = v;
+                    _b = u;
                 }
             }
 
-            public bool Equals(EdgeKey other) => A == other.A && B == other.B;
+            public bool Equals(EdgeKey other) => _a == other._a && _b == other._b;
             public override bool Equals(object obj) => obj is EdgeKey o && Equals(o);
 
             public override int GetHashCode()
             {
                 unchecked
                 {
-                    return (A * 397) ^ B;
+                    return (_a * 397) ^ _b;
                 }
             }
         }
@@ -154,26 +101,28 @@ namespace Bolsover.Splitterator
         // Quantized vertex key for tolerant matching
         private readonly struct VertexKeyEps : IEquatable<VertexKeyEps>
         {
-            public readonly int X, Y, Z; // quantized coordinates
+            private readonly int _x; // quantized coordinates
+            private readonly int _y; // quantized coordinates
+            private readonly int _z; // quantized coordinates
 
             public VertexKeyEps(Vector3 v, float invEps)
             {
-                X = (int)Math.Round(v.X * invEps);
-                Y = (int)Math.Round(v.Y * invEps);
-                Z = (int)Math.Round(v.Z * invEps);
+                _x = (int)Math.Round(v.X * invEps);
+                _y = (int)Math.Round(v.Y * invEps);
+                _z = (int)Math.Round(v.Z * invEps);
             }
 
-            public bool Equals(VertexKeyEps other) => X == other.X && Y == other.Y && Z == other.Z;
+            public bool Equals(VertexKeyEps other) => _x == other._x && _y == other._y && _z == other._z;
             public override bool Equals(object obj) => obj is VertexKeyEps o && Equals(o);
 
             public override int GetHashCode()
             {
                 unchecked
                 {
-                    int h = 17;
-                    h = h * 31 + X;
-                    h = h * 31 + Y;
-                    h = h * 31 + Z;
+                    var h = 17;
+                    h = h * 31 + _x;
+                    h = h * 31 + _y;
+                    h = h * 31 + _z;
                     return h;
                 }
             }
@@ -184,22 +133,22 @@ namespace Bolsover.Splitterator
             out int[][] triVerts,
             out Dictionary<EdgeKey, List<int>> edgeToTris)
         {
-            int n = tris.Count;
+            var n = tris.Count;
             triVerts = new int[n][];
-            float inv = 1.0f / epsilon;
+            var inv = 1.0f / epsilon;
 
             // Map snapped vertices to sequential IDs
             var vtxIds = new Dictionary<VertexKeyEps, int>(capacity: Math.Max(4, n * 3));
-            int nextId = 0;
+            var nextId = 0;
 
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 var t = tris[i];
                 var ids = new int[3];
-                for (int k = 0; k < 3; k++)
+                for (var k = 0; k < 3; k++)
                 {
                     var key = new VertexKeyEps(t.Vertices[k], inv);
-                    if (!vtxIds.TryGetValue(key, out int id))
+                    if (!vtxIds.TryGetValue(key, out var id))
                     {
                         id = nextId++;
                         vtxIds.Add(key, id);
@@ -212,7 +161,7 @@ namespace Bolsover.Splitterator
             }
 
             edgeToTris = new Dictionary<EdgeKey, List<int>>(capacity: Math.Max(4, n * 3));
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
                 var ids = triVerts[i];
                 var e0 = new EdgeKey(ids[0], ids[1]);
@@ -228,70 +177,45 @@ namespace Bolsover.Splitterator
             }
         }
 
-        public static int CountConnectedComponents(List<Triangle> triangles)
+        /// <summary>
+        /// Computes the axis-aligned bounding box of a list of triangles.
+        /// </summary>
+        private static (Vector3 min, Vector3 max) ComputeBounds(List<Triangle> triangles)
         {
-            int n = triangles.Count;
-            if (n == 0) return 0;
+            if (triangles == null || triangles.Count == 0)
+                return (Vector3.Zero, Vector3.Zero);
 
-            const float epsilon = 1e-5f; // tolerant snapping grid size
-            BuildTopologyWithEps(triangles, epsilon, out var triVerts, out var edgeToTris);
+            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
 
-            var visited = new bool[n];
-            int components = 0;
-            var queue = new Queue<int>(Math.Min(1024, n));
-
-            for (int i = 0; i < n; i++)
+            foreach (var tri in triangles)
             {
-                if (visited[i]) continue;
-                components++;
-                visited[i] = true;
-                queue.Enqueue(i);
-
-                while (queue.Count > 0)
+                foreach (var v in tri.Vertices)
                 {
-                    int current = queue.Dequeue();
-                    var ids = triVerts[current];
-
-                    List<int> neigh;
-                    if (edgeToTris.TryGetValue(new EdgeKey(ids[0], ids[1]), out neigh))
-                        for (int k = 0; k < neigh.Count; k++)
-                        {
-                            int nb = neigh[k];
-                            if (!visited[nb])
-                            {
-                                visited[nb] = true;
-                                queue.Enqueue(nb);
-                            }
-                        }
-
-                    if (edgeToTris.TryGetValue(new EdgeKey(ids[1], ids[2]), out neigh))
-                        for (int k = 0; k < neigh.Count; k++)
-                        {
-                            int nb = neigh[k];
-                            if (!visited[nb])
-                            {
-                                visited[nb] = true;
-                                queue.Enqueue(nb);
-                            }
-                        }
-
-                    if (edgeToTris.TryGetValue(new EdgeKey(ids[2], ids[0]), out neigh))
-                        for (int k = 0; k < neigh.Count; k++)
-                        {
-                            int nb = neigh[k];
-                            if (!visited[nb])
-                            {
-                                visited[nb] = true;
-                                queue.Enqueue(nb);
-                            }
-                        }
+                    min = Vector3.Min(min, v);
+                    max = Vector3.Max(max, v);
                 }
             }
 
-            return components;
+            return (min, max);
         }
 
-        
+        /// <summary>
+        /// Calculates an adaptive epsilon based on the model's bounding box diagonal.
+        /// Returns 0.001% of the diagonal length as a tolerance value.
+        /// </summary>
+        private static float CalculateAdaptiveEpsilon(List<Triangle> triangles, float fallback = 0.000001f)
+        {
+            if (triangles == null || triangles.Count == 0) return fallback;
+
+            var (min, max) = ComputeBounds(triangles);
+            var diagonal = Vector3.Distance(min, max);
+
+            if (diagonal < 1e-10f) return fallback; // Model too small, use fallback
+
+            // Use 0.001% of diagonal as epsilon
+            return diagonal * 0.00001f;
+        }
 
         public static void WriteAsciiStl(string path, List<Triangle> triangles, string solidName = "body")
         {
@@ -314,51 +238,15 @@ namespace Bolsover.Splitterator
             writer.WriteLine($"endsolid {solidName}");
         }
         
-        // needs work!!
-        // public static void WriteBinaryStl(string path, List<Triangle> triangles, string header = "solid")
-        // {
-        //     using var stream = File.OpenWrite(path);
-        //     using var writer = new BinaryWriter(stream);
-        //
-        //     // Write 80-byte header (padded or trimmed to exactly 80 bytes)
-        //     var headerBytes = System.Text.Encoding.ASCII.GetBytes(header);
-        //     Array.Resize(ref headerBytes, 80);
-        //     writer.Write(headerBytes);
-        //
-        //     // Write the number of triangles
-        //     writer.Write((uint)triangles.Count);
-        //
-        //     // Write triangle data
-        //     foreach (var triangle in triangles)
-        //     {
-        //         // Write the normal vector (for simplicity, write zero-normal; adjust if computed normals needed)
-        //         writer.Write(0.0f); // Normal X
-        //         writer.Write(0.0f); // Normal Y
-        //         writer.Write(0.0f); // Normal Z
-        //
-        //         // Write the 3 vertices of the triangle
-        //         foreach (var vertex in triangle.Vertices)
-        //         {
-        //             writer.Write(vertex.X);
-        //             writer.Write(vertex.Y);
-        //             writer.Write(vertex.Z);
-        //         }
-        //
-        //         // Write the attribute byte count (set to 0 as per STL specification)
-        //         writer.Write((ushort)0);
-        //     }
-        // }
         
-        
-
-        public static List<List<Triangle>> GetConnectedComponents(List<Triangle> triangles)
+        public static List<List<Triangle>> GetConnectedComponents(List<Triangle> triangles, float? epsilon = null)
         {
-            int n = triangles.Count;
+            var n = triangles.Count;
             var result = new List<List<Triangle>>();
             if (n == 0) return result;
 
-            const float epsilon = 1e-5f; // tolerant snapping grid size
-            BuildTopologyWithEps(triangles, epsilon, out var triVerts, out var edgeToTris);
+            var eps = epsilon ?? CalculateAdaptiveEpsilon(triangles);
+            BuildTopologyWithEps(triangles, eps, out var triVerts, out var edgeToTris);
 
             var visited = new bool[n];
             var queue = new Queue<int>(Math.Min(1024, n));
@@ -376,8 +264,7 @@ namespace Bolsover.Splitterator
                     compIdxs.Add(current);
                     var ids = triVerts[current];
 
-                    List<int> neigh;
-                    if (edgeToTris.TryGetValue(new EdgeKey(ids[0], ids[1]), out neigh))
+                    if (edgeToTris.TryGetValue(new EdgeKey(ids[0], ids[1]), out var neigh))
                         foreach (var nb in neigh.Where(nb => !visited[nb]))
                         {
                             visited[nb] = true;
@@ -400,27 +287,177 @@ namespace Bolsover.Splitterator
                 }
 
                 var group = new List<Triangle>(compIdxs.Count);
-                for (var k = 0; k < compIdxs.Count; k++) group.Add(triangles[k]);
+                for (var k = 0; k < compIdxs.Count; k++) group.Add(triangles[compIdxs[k]]);
                 result.Add(group);
             }
 
             return result;
         }
-        
-        public static void SeparateBodies(string inFile, string outDir)
+
+        /// <summary>
+        /// Filters connected components to remove bodies smaller than the specified minimum triangle count.
+        /// Components are sorted by size (largest first) before filtering.
+        /// </summary>
+        /// <param name="components">List of connected components to filter</param>
+        /// <param name="minTriangleCount">Minimum number of triangles required for a body to be included</param>
+        /// <returns>Filtered and sorted list of components</returns>
+        public static List<List<Triangle>> FilterSmallBodies(List<List<Triangle>> components, int minTriangleCount = 1)
         {
-            //string path = "Pencil Case.stl";
+            if (components == null || components.Count == 0) return new List<List<Triangle>>();
+
+            // Sort by triangle count descending (largest first)
+            var sorted = components.OrderByDescending(c => c.Count).ToList();
+
+            // Filter out small bodies
+            if (minTriangleCount > 1)
+            {
+                sorted = sorted.Where(c => c.Count >= minTriangleCount).ToList();
+            }
+
+            return sorted;
+        }
+
+        /// <summary>
+        /// Statistics about a body (connected component)
+        /// </summary>
+        public class BodyStatistics
+        {
+            public int TriangleCount { get; set; }
+            public float SurfaceArea { get; set; }
+            public Vector3 BoundingBoxMin { get; set; }
+            public Vector3 BoundingBoxMax { get; set; }
+            public Vector3 BoundingBoxSize => BoundingBoxMax - BoundingBoxMin;
+            public float BoundingBoxVolume => BoundingBoxSize.X * BoundingBoxSize.Y * BoundingBoxSize.Z;
+        }
+
+        /// <summary>
+        /// Computes statistics for a body (list of triangles)
+        /// </summary>
+        public static BodyStatistics ComputeBodyStatistics(List<Triangle> triangles)
+        {
+            if (triangles == null || triangles.Count == 0)
+                return new BodyStatistics();
+
+            var (min, max) = ComputeBounds(triangles);
+
+            float surfaceArea = 0;
+            foreach (var tri in triangles)
+            {
+                // Calculate triangle area using cross product
+                var v0 = tri.Vertices[0];
+                var v1 = tri.Vertices[1];
+                var v2 = tri.Vertices[2];
+
+                var edge1 = v1 - v0;
+                var edge2 = v2 - v0;
+                var cross = Vector3.Cross(edge1, edge2);
+                surfaceArea += cross.Length() * 0.5f;
+            }
+
+            return new BodyStatistics
+            {
+                TriangleCount = triangles.Count,
+                SurfaceArea = surfaceArea,
+                BoundingBoxMin = min,
+                BoundingBoxMax = max
+            };
+        }
+
+        /// <summary>
+        /// Validation results for mesh topology
+        /// </summary>
+        public class ValidationResults
+        {
+            public int TotalTriangles { get; set; }
+            public int DegenerateTriangles { get; set; }
+            public int ManifoldEdges { get; set; }
+            public int BoundaryEdges { get; set; }
+            public int NonManifoldEdges { get; set; }
+            public bool IsManifold => NonManifoldEdges == 0;
+        }
+
+        /// <summary>
+        /// Validates the mesh topology and checks for degenerate triangles and manifold edges
+        /// </summary>
+        public static ValidationResults ValidateMesh(List<Triangle> triangles, float epsilon = 0.000001f)
+        {
+            var results = new ValidationResults
+            {
+                TotalTriangles = triangles?.Count ?? 0
+            };
+
+            if (triangles == null || triangles.Count == 0) return results;
+
+            // Check for degenerate triangles
+            foreach (var tri in triangles)
+            {
+                var v0 = tri.Vertices[0];
+                var v1 = tri.Vertices[1];
+                var v2 = tri.Vertices[2];
+
+                var edge1 = v1 - v0;
+                var edge2 = v2 - v0;
+                var cross = Vector3.Cross(edge1, edge2);
+                var area = cross.Length() * 0.5f;
+
+                if (area < epsilon)
+                {
+                    results.DegenerateTriangles++;
+                }
+            }
+
+            // Build topology and check edge manifoldness
+            var adaptiveEps = CalculateAdaptiveEpsilon(triangles, epsilon);
+            BuildTopologyWithEps(triangles, adaptiveEps, out _, out var edgeToTris);
+
+            foreach (var kvp in edgeToTris)
+            {
+                var count = kvp.Value.Count;
+                if (count == 1)
+                {
+                    results.BoundaryEdges++;
+                }
+                else if (count == 2)
+                {
+                    results.ManifoldEdges++;
+                }
+                else
+                {
+                    results.NonManifoldEdges++;
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Separates multiple bodies from an STL file and exports them to individual files.
+        /// Bodies are sorted by size (largest first) and optionally filtered by minimum triangle count.
+        /// </summary>
+        /// <param name="inFile">Input STL file path</param>
+        /// <param name="outDir">Output directory for separated body files</param>
+        /// <param name="minTriangleCount">Minimum triangle count to include a body (default: 1)</param>
+        /// <param name="epsilon">Optional tolerance for vertex snapping (default: auto-calculated)</param>
+        public static void SeparateBodies(string inFile, string outDir, int minTriangleCount = 1)
+        {
             var triangles = ParseStl(inFile);
             var bodies = GetConnectedComponents(triangles);
 
+            // Filter and sort bodies by size
+            bodies = FilterSmallBodies(bodies, minTriangleCount);
+
+            var baseName = Path.GetFileNameWithoutExtension(inFile);
+
             for (var i = 0; i < bodies.Count; i++)
             {
-                var outputPath = $"body_{i + 1}.stl";
-                outputPath = Path.Combine(outDir, outputPath);
-                var baseName = Path.GetFileNameWithoutExtension(inFile);
+                var stats = ComputeBodyStatistics(bodies[i]);
+
+                // Generate filename with body index and triangle count
+                var fileName = $"{baseName}_body_{i + 1:D2}_tris{stats.TriangleCount}.stl";
+                var outputPath = Path.Combine(outDir, fileName);
                 var solidName = $"{baseName}_body_{i + 1}";
+
                 WriteAsciiStl(outputPath, bodies[i], solidName);
-                Console.WriteLine($"Exported: {outputPath}");
             }
         }
     }

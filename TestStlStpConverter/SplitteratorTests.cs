@@ -17,14 +17,14 @@ namespace TestStlToStp
             var triangles = StlSplitterator.ParseStl(path);
             var tianglscount = triangles.Count;
             Console.WriteLine($"Number of triangles: {tianglscount}");
-             int bodies = StlSplitterator.CountConnectedComponents(triangles);
+             int bodies = StlSplitterator.GetConnectedComponents(triangles).Count;
              Console.WriteLine($"Estimated number of solid bodies: {bodies}");
         }
 
         [Test]
         public static void SeparateBodies()
         {
-            // string path = "roach_kit_card.stl";
+             string path = "roach_kit_card.stl";
             // var triangles = StlSplitterator.ParseStl(path);
             // var bodies = StlSplitterator.GetConnectedComponents(triangles);
             //
@@ -34,7 +34,7 @@ namespace TestStlToStp
             //     StlSplitterator.WriteAsciiStl(outputPath, bodies[i], $"body_{i + 1}");
             //     Console.WriteLine($"Exported: {outputPath}");
             // }
-            StlSplitterator.SeparateBodies("roach_kit_card.stl", "D:\\02_Repositop, ory\\02_Bolsover\\StlStpConverter\\TestStlStpConverter");
+            StlSplitterator.SeparateBodies(path, "C:\\Users\\DavidBolsover\\OneDrive - Bolsover\\Desktop\\testoutput");
             
         }
     }

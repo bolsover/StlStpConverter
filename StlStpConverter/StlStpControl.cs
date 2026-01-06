@@ -69,16 +69,32 @@ namespace Bolsover
 
         private void OutputButton_Click(object sender, EventArgs e)
         {
-            var dlg = new SaveFileDialog { Filter = @"STEP file|*.stp;*.step", Title = @"Save STEP file" };
+            var dlg = new FolderBrowserDialog { Description = @"Select output folder for STEP file(s)" };
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                _converterParams.OutFile = dlg.FileName;
+                // Use input filename with .stp extension
+                if (!string.IsNullOrWhiteSpace(_converterParams.InFile))
+                {
+                    var inputFileName = Path.GetFileNameWithoutExtension(_converterParams.InFile);
+                    _converterParams.OutFile = Path.Combine(dlg.SelectedPath, inputFileName + ".stp");
+                }
+                else
+                {
+                    _converterParams.OutFile = dlg.SelectedPath;
+                }
             }
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {
             _cts?.Cancel();
+        }
+        
+        // Extract triangle count from filename if present: *_tris<count>.stl
+        int ExtractTriangleCount(string path)
+        {
+            var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"_tris(\d+)\.stl", RegexOptions.IgnoreCase);
+            return m.Success ? int.Parse(m.Groups[1].Value) : 0;
         }
 
         private async Task ExecuteConversionAsync()
@@ -158,15 +174,15 @@ namespace Bolsover
                     var outDir = Path.GetDirectoryName(_converterParams.OutFile);
                     if (string.IsNullOrWhiteSpace(outDir)) outDir = Environment.CurrentDirectory;
 
-                    // Snapshot existing body_*.stl files to detect new ones produced by the splitterator
-                    var before = new HashSet<string>(Directory.GetFiles(outDir, "body_*.stl"), StringComparer.OrdinalIgnoreCase);
+                    // Snapshot existing *_body_*.stl files to detect new ones produced by the splitterator
+                    var before = new HashSet<string>(Directory.GetFiles(outDir, "*_body_*.stl"), StringComparer.OrdinalIgnoreCase);
 
                     _converterParams.Message = "Splitting STL into separate bodies...";
                     // Run potentially heavy split on a background thread, honor cancellation
                     await Task.Run(() => StlSplitterator.SeparateBodies(_converterParams.InFile, outDir), token);
                     token.ThrowIfCancellationRequested();
 
-                    var after = Directory.GetFiles(outDir, "body_*.stl");
+                    var after = Directory.GetFiles(outDir, "*_body_*.stl");
                     var newBodies = after.Where(p => !before.Contains(p)).ToList();
 
                     if (newBodies.Count == 0)
@@ -175,12 +191,14 @@ namespace Bolsover
                         return;
                     }
 
-                    // Order by numeric suffix if possible: body_<n>.stl
+                    // Order by numeric suffix if possible: *_body_<n>_tris<count>.stl or body_<n>.stl
                     int ExtractIndex(string path)
                     {
-                        var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"body_(\d+)\.stl", RegexOptions.IgnoreCase);
+                        var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"_body_(\d+)(?:_tris\d+)?\.stl", RegexOptions.IgnoreCase);
                         return m.Success ? int.Parse(m.Groups[1].Value) : int.MaxValue;
                     }
+
+               
 
                     newBodies = newBodies.OrderBy(ExtractIndex).ToList();
 
@@ -196,9 +214,13 @@ namespace Bolsover
                         var bodyStl = newBodies[i];
                         var idx = ExtractIndex(bodyStl);
                         var n = (idx == int.MaxValue ? i + 1 : idx);
+                        var trCount = ExtractTriangleCount(bodyStl);
 
                         // Compute desired STL name to match the STEP base name but with .stl
-                        var desiredStlPath = Path.Combine(outDir, $"{baseOutName}_body_{n}.stl");
+                        // Preserve triangle count in filename if present
+                        var desiredStlPath = triCount > 0
+                            ? Path.Combine(outDir, $"{baseOutName}_body_{n:D2}_tris{trCount}.stl")
+                            : Path.Combine(outDir, $"{baseOutName}_body_{n:D2}.stl");
 
                         try
                         {
@@ -220,7 +242,10 @@ namespace Bolsover
                             _converterParams.Message = $"Warning: Could not rename split STL to '{desiredStlPath}': {renameEx.Message}";
                         }
 
-                        var stepOut = Path.Combine(outDir, $"{baseOutName}_body_{n}{outExt}");
+                        // Generate STEP filename with triangle count for easy correlation
+                        var stepOut = triCount > 0
+                            ? Path.Combine(outDir, $"{baseOutName}_body_{n:D2}_tris{triCount}{outExt}")
+                            : Path.Combine(outDir, $"{baseOutName}_body_{n:D2}{outExt}");
 
                         _converterParams.Message = $"Converting body {n} to STEP...";
 
