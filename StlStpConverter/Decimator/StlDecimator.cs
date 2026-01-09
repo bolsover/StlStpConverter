@@ -1,20 +1,16 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-
 namespace Bolsover.Decimator
 {
-
-
     public class StlSimplifier
     {
-        public readonly List<Vertex> Vertices = new();
-        public readonly List<Face> Faces = new();
         private readonly HashSet<(int, int)> boundaryEdges = new();
         private readonly SortedList<float, List<(int, int)>> edgeQueue = new();
+        public readonly List<Face> Faces = new();
         private readonly HashSet<(int, int)> sharpEdges = new();
+        public readonly List<Vertex> Vertices = new();
 
 
         public void Simplify(int targetFaceCount)
@@ -32,17 +28,20 @@ namespace Bolsover.Decimator
                 if (!success) break;
                 if (IsProtectedEdge(v1, v2) || IsBoundaryEdge(v1, v2)) continue;
 
-              //  if (IsBoundaryEdge(v1, v2)) continue;
+                //  if (IsBoundaryEdge(v1, v2)) continue;
                 CollapseEdge(v1, v2);
             }
         }
-        
-        private void IdentifySharpEdges(float angleThresholdDegrees) {
+
+        private void IdentifySharpEdges(float angleThresholdDegrees)
+        {
             var edgeToFaces = new Dictionary<(int, int), List<int>>();
 
-            for (var i = 0; i < Faces.Count; i++) {
+            for (var i = 0; i < Faces.Count; i++)
+            {
                 var face = Faces[i];
-                for (var j = 0; j < 3; j++) {
+                for (var j = 0; j < 3; j++)
+                {
                     var a = face.Vertices[j];
                     var b = face.Vertices[(j + 1) % 3];
                     var edge = (Math.Min(a, b), Math.Max(a, b));
@@ -52,7 +51,8 @@ namespace Bolsover.Decimator
                 }
             }
 
-            foreach (var kvp in edgeToFaces) {
+            foreach (var kvp in edgeToFaces)
+            {
                 var faces = kvp.Value;
                 if (faces.Count != 2) continue;
 
@@ -60,13 +60,12 @@ namespace Bolsover.Decimator
                 var n2 = ComputeFaceNormal(Faces[faces[1]]);
                 var angle = Math.Acos(Clamp(Vector3.Dot(n1, n2), -1f, 1f)) * (180f / (float)Math.PI);
 
-                if (angle > angleThresholdDegrees) {
-                    sharpEdges.Add(kvp.Key);
-                }
+                if (angle > angleThresholdDegrees) sharpEdges.Add(kvp.Key);
             }
         }
-        
-        private bool IsProtectedEdge(int v1, int v2) {
+
+        private bool IsProtectedEdge(int v1, int v2)
+        {
             var edge = (Math.Min(v1, v2), Math.Max(v1, v2));
             return boundaryEdges.Contains(edge) || sharpEdges.Contains(edge);
         }
@@ -75,18 +74,18 @@ namespace Bolsover.Decimator
         private static double Clamp(double value, double min, double max)
         {
             // Ensure the value is not less than the minimum
-            if (value < min)
-            {
-                return min;
-            }
+            if (value < min) return min;
             // Ensure the value is not greater than the maximum
 
-            return value > max ? max :
+            return value > max
+                ? max
+                :
                 // Otherwise, return the original value
                 value;
         }
 
-        private Vector3 ComputeFaceNormal(Face face) {
+        private Vector3 ComputeFaceNormal(Face face)
+        {
             var v0 = Vertices[face.Vertices[0]].Position;
             var v1 = Vertices[face.Vertices[1]].Position;
             var v2 = Vertices[face.Vertices[2]].Position;
@@ -107,10 +106,7 @@ namespace Bolsover.Decimator
                 var plane = new Vector4(normal, d);
                 var q = OuterProduct(plane, plane);
 
-                foreach (var vi in face.Vertices)
-                {
-                    Vertices[vi].Quadric += q;
-                }
+                foreach (var vi in face.Vertices) Vertices[vi].Quadric += q;
             }
         }
 
@@ -119,7 +115,6 @@ namespace Bolsover.Decimator
             var edgeCount = new Dictionary<(int, int), int>();
 
             foreach (var face in Faces)
-            {
                 for (var i = 0; i < 3; i++)
                 {
                     var a = face.Vertices[i];
@@ -129,12 +124,10 @@ namespace Bolsover.Decimator
                         edgeCount[edge] = 0;
                     edgeCount[edge]++;
                 }
-            }
 
             foreach (var kvp in edgeCount)
-            {
-                if (kvp.Value == 1) boundaryEdges.Add(kvp.Key);
-            }
+                if (kvp.Value == 1)
+                    boundaryEdges.Add(kvp.Key);
         }
 
         private bool IsBoundaryEdge(int v1, int v2)
@@ -146,13 +139,11 @@ namespace Bolsover.Decimator
         private void EnqueueAllEdges()
         {
             for (var i = 0; i < Vertices.Count; i++)
-            {
                 foreach (var j in GetAdjacentVertices(i))
                 {
                     var cost = ComputeCollapseCost(i, j);
                     EnqueueEdge(i, j, cost);
                 }
-            }
         }
 
         private void EnqueueEdge(int v1, int v2, float cost)
@@ -195,16 +186,13 @@ namespace Bolsover.Decimator
             {
                 var face = Faces[i];
                 for (var j = 0; j < 3; j++)
-                {
-                    if (face.Vertices[j] == v2) face.Vertices[j] = v1;
-                }
+                    if (face.Vertices[j] == v2)
+                        face.Vertices[j] = v1;
 
                 if (face.Vertices[0] == face.Vertices[1] ||
                     face.Vertices[1] == face.Vertices[2] ||
                     face.Vertices[2] == face.Vertices[0])
-                {
                     Faces.RemoveAt(i);
-                }
             }
         }
 
@@ -212,15 +200,10 @@ namespace Bolsover.Decimator
         {
             var adj = new HashSet<int>();
             foreach (var face in Faces)
-            {
                 if (Array.Exists(face.Vertices, v => v == index))
-                {
                     foreach (var v in face.Vertices)
-                    {
-                        if (v != index) adj.Add(v);
-                    }
-                }
-            }
+                        if (v != index)
+                            adj.Add(v);
 
             return adj;
         }
@@ -234,8 +217,5 @@ namespace Bolsover.Decimator
                 a.W * b.X, a.W * b.Y, a.W * b.Z, a.W * b.W
             );
         }
-
-        
-      
     }
 }

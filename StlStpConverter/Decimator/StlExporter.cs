@@ -1,13 +1,18 @@
-﻿using System.Numerics;
+﻿using System.IO;
+using System.Numerics;
 
 namespace Bolsover.Decimator
 {
-    public static class StlExporter {
-        public static void SaveAscii(string path, StlSimplifier simplifier) {
-            using (var writer = new System.IO.StreamWriter(path)) {
+    public static class StlExporter
+    {
+        public static void SaveAscii(string path, StlSimplifier simplifier)
+        {
+            using (var writer = new StreamWriter(path))
+            {
                 writer.WriteLine("solid simplified");
 
-                foreach (var face in simplifier.Faces) {
+                foreach (var face in simplifier.Faces)
+                {
                     var v0 = simplifier.Vertices[face.Vertices[0]].Position;
                     var v1 = simplifier.Vertices[face.Vertices[1]].Position;
                     var v2 = simplifier.Vertices[face.Vertices[2]].Position;

@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace Bolsover.Converter
 {
     public class Unit : IEntity
     {
+        #region UnitTypes enum
+
         public enum UnitTypes
         {
             Length,
@@ -17,13 +14,7 @@ namespace Bolsover.Converter
             Uncertainty
         }
 
-        public int Id { get; }
-
-        public string Label { get; } = string.Empty;
-
-        public UnitTypes UnitType { get; }
-
-        public Unit LengthUnits { get; } = null;
+        #endregion
 
         public Unit(int id, UnitTypes unitType)
         {
@@ -38,42 +29,55 @@ namespace Bolsover.Converter
             LengthUnits = lengthUnits;
         }
 
+        public UnitTypes UnitType { get; }
+
+        public Unit LengthUnits { get; }
+
+        #region IEntity Members
+
+        public int Id { get; }
+
+        public string Label { get; } = string.Empty;
+
         public void Serialize(StreamWriter writer)
         {
             switch (UnitType)
             {
                 case UnitTypes.Length:
                     writer.WriteLine($"#{Id} = (\n" +
-                        $"LENGTH_UNIT()\n" +
-                        $"NAMED_UNIT(*)\n" +
-                        $"SI_UNIT(.MILLI.,.METRE.)\n" +
-                        $");");
+                                     "LENGTH_UNIT()\n" +
+                                     "NAMED_UNIT(*)\n" +
+                                     "SI_UNIT(.MILLI.,.METRE.)\n" +
+                                     ");");
                     break;
 
                 case UnitTypes.PlaneAngle:
                     writer.WriteLine($"#{Id} = (\n" +
-                        $"NAMED_UNIT(*)\n" +
-                        $"PLANE_ANGLE_UNIT()\n" +
-                        $"SI_UNIT($,.RADIAN.)\n" +
-                        $");");
+                                     "NAMED_UNIT(*)\n" +
+                                     "PLANE_ANGLE_UNIT()\n" +
+                                     "SI_UNIT($,.RADIAN.)\n" +
+                                     ");");
                     break;
 
                 case UnitTypes.SolidAngle:
                     writer.WriteLine($"#{Id} = (\n" +
-                        $"NAMED_UNIT(*)\n" +
-                        $"SI_UNIT($,.STERADIAN.)\n" +
-                        $"SOLID_ANGLE_UNIT()\n" +
-                        $");");
+                                     "NAMED_UNIT(*)\n" +
+                                     "SI_UNIT($,.STERADIAN.)\n" +
+                                     "SOLID_ANGLE_UNIT()\n" +
+                                     ");");
                     break;
 
                 case UnitTypes.Uncertainty:
-                    writer.WriteLine($"#{Id} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-6),#{LengthUnits.Id},\n" +
-                        $"'DISTANCE_ACCURACY_VALUE',\n" +
-                        $"'Maximum model space distance between geometric entities at asserted connectivities'\n" +
-                        $");");
+                    writer.WriteLine(
+                        $"#{Id} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-6),#{LengthUnits.Id},\n" +
+                        "'DISTANCE_ACCURACY_VALUE',\n" +
+                        "'Maximum model space distance between geometric entities at asserted connectivities'\n" +
+                        ");");
                     break;
             }
         }
+
+        #endregion
     }
 }
 

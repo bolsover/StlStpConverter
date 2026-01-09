@@ -1,20 +1,9 @@
-﻿
-using System.IO;
+﻿using System.IO;
 
 namespace Bolsover.Converter
 {
     public class EdgeCurve : IEntity
     {
-        public int Id { get; }
-        public string Label { get; } = string.Empty;
-        private Vertex Vert1 { get; }
-        private Vertex Vert2 { get; }
-
-        private Line Line { get; }
-        private bool Dir { get; }
-
-      
-
         public EdgeCurve(int id, Vertex vert1In, Vertex vert2In, Line lineIn, bool dirIn)
         {
             Id = id;
@@ -24,6 +13,17 @@ namespace Bolsover.Converter
             Dir = dirIn;
         }
 
+        private Vertex Vert1 { get; }
+        private Vertex Vert2 { get; }
+
+        private Line Line { get; }
+        private bool Dir { get; }
+
+        #region IEntity Members
+
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
+
         public void Serialize(StreamWriter writer)
         {
             var id = GetId();
@@ -31,10 +31,11 @@ namespace Bolsover.Converter
             writer.WriteLine($"#{Id} = EDGE_CURVE('', #{Vert1.Id}, #{Vert2.Id}, #{id}, {direction});");
         }
 
+        #endregion
+
 
         private int GetId()
         {
-        
             return Line?.Id ?? 0;
         }
     }

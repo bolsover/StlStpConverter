@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,14 +9,11 @@ using Bolsover.Converter;
 
 namespace Bolsover.Splitterator
 {
-
-
     public abstract class StlSplitterator
-        {
-
+    {
         /// <summary>
-        /// Synchronous STL parser that delegates to the async implementation.
-        /// Prefer using <see cref="ParseStlAsync"/> in new code for non-blocking I/O.
+        ///     Synchronous STL parser that delegates to the async implementation.
+        ///     Prefer using <see cref="ParseStlAsync" /> in new code for non-blocking I/O.
         /// </summary>
         public static List<Triangle> ParseStl(string path)
         {
@@ -27,22 +22,23 @@ namespace Bolsover.Splitterator
         }
 
         /// <summary>
-        /// Asynchronously reads an STL file using <see cref="StlReader.ReadStlAsync"/> and converts the
-        /// returned node list (x, y, z flattened) into a list of <see cref="Triangle"/> objects.
+        ///     Asynchronously reads an STL file using <see cref="StlReader.ReadStlAsync" /> and converts the
+        ///     returned node list (x, y, z flattened) into a list of <see cref="Triangle" /> objects.
         /// </summary>
         /// <param name="path">Path to the STL file.</param>
         /// <param name="token">Cancellation token.</param>
         /// <param name="progress">Optional textual progress reporter.</param>
         /// <returns>List of triangles parsed from the STL file.</returns>
-        private static async Task<List<Triangle>> ParseStlAsync(string path, CancellationToken token = default, IProgress<string> progress = null)
+        private static async Task<List<Triangle>> ParseStlAsync(string path, CancellationToken token = default,
+            IProgress<string> progress = null)
         {
             var nodes = await StlReader.ReadStlAsync(path, token, progress).ConfigureAwait(false);
             return ConvertNodesToTriangles(nodes);
         }
 
         /// <summary>
-        /// Converts a flattened list of doubles [x0,y0,z0, x1,y1,z1, x2,y2,z2, ...] coming from the
-        /// STL reader into a list of <see cref="Triangle"/> instances.
+        ///     Converts a flattened list of doubles [x0,y0,z0, x1,y1,z1, x2,y2,z2, ...] coming from the
+        ///     STL reader into a list of <see cref="Triangle" /> instances.
         /// </summary>
         private static List<Triangle> ConvertNodesToTriangles(List<double> nodes)
         {
@@ -55,7 +51,7 @@ namespace Bolsover.Splitterator
                 {
                     Vertices =
                     {
-                        [0] = new Vector3((float)nodes[i],     (float)nodes[i + 1], (float)nodes[i + 2]),
+                        [0] = new Vector3((float)nodes[i], (float)nodes[i + 1], (float)nodes[i + 2]),
                         [1] = new Vector3((float)nodes[i + 3], (float)nodes[i + 4], (float)nodes[i + 5]),
                         [2] = new Vector3((float)nodes[i + 6], (float)nodes[i + 7], (float)nodes[i + 8])
                     }
@@ -64,68 +60,6 @@ namespace Bolsover.Splitterator
             }
 
             return triangles;
-        }
-
-        // --- Optimized topology helpers (vertex snapping variant) ---
-        private readonly struct EdgeKey : IEquatable<EdgeKey>
-        {
-            private readonly int _a; // canonicalized so A <= B
-            private readonly int _b; // canonicalized so A <= B
-
-            public EdgeKey(int u, int v)
-            {
-                if (u <= v)
-                {
-                    _a = u;
-                    _b = v;
-                }
-                else
-                {
-                    _a = v;
-                    _b = u;
-                }
-            }
-
-            public bool Equals(EdgeKey other) => _a == other._a && _b == other._b;
-            public override bool Equals(object obj) => obj is EdgeKey o && Equals(o);
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    return (_a * 397) ^ _b;
-                }
-            }
-        }
-
-        // Quantized vertex key for tolerant matching
-        private readonly struct VertexKeyEps : IEquatable<VertexKeyEps>
-        {
-            private readonly int _x; // quantized coordinates
-            private readonly int _y; // quantized coordinates
-            private readonly int _z; // quantized coordinates
-
-            public VertexKeyEps(Vector3 v, float invEps)
-            {
-                _x = (int)Math.Round(v.X * invEps);
-                _y = (int)Math.Round(v.Y * invEps);
-                _z = (int)Math.Round(v.Z * invEps);
-            }
-
-            public bool Equals(VertexKeyEps other) => _x == other._x && _y == other._y && _z == other._z;
-            public override bool Equals(object obj) => obj is VertexKeyEps o && Equals(o);
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    var h = 17;
-                    h = h * 31 + _x;
-                    h = h * 31 + _y;
-                    h = h * 31 + _z;
-                    return h;
-                }
-            }
         }
 
         private static void BuildTopologyWithEps(
@@ -138,7 +72,7 @@ namespace Bolsover.Splitterator
             var inv = 1.0f / epsilon;
 
             // Map snapped vertices to sequential IDs
-            var vtxIds = new Dictionary<VertexKeyEps, int>(capacity: Math.Max(4, n * 3));
+            var vtxIds = new Dictionary<VertexKeyEps, int>(Math.Max(4, n * 3));
             var nextId = 0;
 
             for (var i = 0; i < n; i++)
@@ -160,7 +94,7 @@ namespace Bolsover.Splitterator
                 triVerts[i] = ids;
             }
 
-            edgeToTris = new Dictionary<EdgeKey, List<int>>(capacity: Math.Max(4, n * 3));
+            edgeToTris = new Dictionary<EdgeKey, List<int>>(Math.Max(4, n * 3));
             for (var i = 0; i < n; i++)
             {
                 var ids = triVerts[i];
@@ -178,7 +112,7 @@ namespace Bolsover.Splitterator
         }
 
         /// <summary>
-        /// Computes the axis-aligned bounding box of a list of triangles.
+        ///     Computes the axis-aligned bounding box of a list of triangles.
         /// </summary>
         private static (Vector3 min, Vector3 max) ComputeBounds(List<Triangle> triangles)
         {
@@ -189,20 +123,18 @@ namespace Bolsover.Splitterator
             var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
 
             foreach (var tri in triangles)
+            foreach (var v in tri.Vertices)
             {
-                foreach (var v in tri.Vertices)
-                {
-                    min = Vector3.Min(min, v);
-                    max = Vector3.Max(max, v);
-                }
+                min = Vector3.Min(min, v);
+                max = Vector3.Max(max, v);
             }
 
             return (min, max);
         }
 
         /// <summary>
-        /// Calculates an adaptive epsilon based on the model's bounding box diagonal.
-        /// Returns 0.001% of the diagonal length as a tolerance value.
+        ///     Calculates an adaptive epsilon based on the model's bounding box diagonal.
+        ///     Returns 0.001% of the diagonal length as a tolerance value.
         /// </summary>
         private static float CalculateAdaptiveEpsilon(List<Triangle> triangles, float fallback = 0.000001f)
         {
@@ -226,10 +158,7 @@ namespace Bolsover.Splitterator
             {
                 writer.WriteLine("  facet normal 0 0 0");
                 writer.WriteLine("    outer loop");
-                foreach (var v in tri.Vertices)
-                {
-                    writer.WriteLine($"      vertex {v.X} {v.Y} {v.Z}");
-                }
+                foreach (var v in tri.Vertices) writer.WriteLine($"      vertex {v.X} {v.Y} {v.Z}");
 
                 writer.WriteLine("    endloop");
                 writer.WriteLine("  endfacet");
@@ -237,8 +166,8 @@ namespace Bolsover.Splitterator
 
             writer.WriteLine($"endsolid {solidName}");
         }
-        
-        
+
+
         public static List<List<Triangle>> GetConnectedComponents(List<Triangle> triangles, float? epsilon = null)
         {
             var n = triangles.Count;
@@ -295,8 +224,8 @@ namespace Bolsover.Splitterator
         }
 
         /// <summary>
-        /// Filters connected components to remove bodies smaller than the specified minimum triangle count.
-        /// Components are sorted by size (largest first) before filtering.
+        ///     Filters connected components to remove bodies smaller than the specified minimum triangle count.
+        ///     Components are sorted by size (largest first) before filtering.
         /// </summary>
         /// <param name="components">List of connected components to filter</param>
         /// <param name="minTriangleCount">Minimum number of triangles required for a body to be included</param>
@@ -309,29 +238,13 @@ namespace Bolsover.Splitterator
             var sorted = components.OrderByDescending(c => c.Count).ToList();
 
             // Filter out small bodies
-            if (minTriangleCount > 1)
-            {
-                sorted = sorted.Where(c => c.Count >= minTriangleCount).ToList();
-            }
+            if (minTriangleCount > 1) sorted = sorted.Where(c => c.Count >= minTriangleCount).ToList();
 
             return sorted;
         }
 
         /// <summary>
-        /// Statistics about a body (connected component)
-        /// </summary>
-        public class BodyStatistics
-        {
-            public int TriangleCount { get; set; }
-            public float SurfaceArea { get; set; }
-            public Vector3 BoundingBoxMin { get; set; }
-            public Vector3 BoundingBoxMax { get; set; }
-            public Vector3 BoundingBoxSize => BoundingBoxMax - BoundingBoxMin;
-            public float BoundingBoxVolume => BoundingBoxSize.X * BoundingBoxSize.Y * BoundingBoxSize.Z;
-        }
-
-        /// <summary>
-        /// Computes statistics for a body (list of triangles)
+        ///     Computes statistics for a body (list of triangles)
         /// </summary>
         public static BodyStatistics ComputeBodyStatistics(List<Triangle> triangles)
         {
@@ -364,20 +277,7 @@ namespace Bolsover.Splitterator
         }
 
         /// <summary>
-        /// Validation results for mesh topology
-        /// </summary>
-        public class ValidationResults
-        {
-            public int TotalTriangles { get; set; }
-            public int DegenerateTriangles { get; set; }
-            public int ManifoldEdges { get; set; }
-            public int BoundaryEdges { get; set; }
-            public int NonManifoldEdges { get; set; }
-            public bool IsManifold => NonManifoldEdges == 0;
-        }
-
-        /// <summary>
-        /// Validates the mesh topology and checks for degenerate triangles and manifold edges
+        ///     Validates the mesh topology and checks for degenerate triangles and manifold edges
         /// </summary>
         public static ValidationResults ValidateMesh(List<Triangle> triangles, float epsilon = 0.000001f)
         {
@@ -400,10 +300,7 @@ namespace Bolsover.Splitterator
                 var cross = Vector3.Cross(edge1, edge2);
                 var area = cross.Length() * 0.5f;
 
-                if (area < epsilon)
-                {
-                    results.DegenerateTriangles++;
-                }
+                if (area < epsilon) results.DegenerateTriangles++;
             }
 
             // Build topology and check edge manifoldness
@@ -414,25 +311,19 @@ namespace Bolsover.Splitterator
             {
                 var count = kvp.Value.Count;
                 if (count == 1)
-                {
                     results.BoundaryEdges++;
-                }
                 else if (count == 2)
-                {
                     results.ManifoldEdges++;
-                }
                 else
-                {
                     results.NonManifoldEdges++;
-                }
             }
 
             return results;
         }
 
         /// <summary>
-        /// Separates multiple bodies from an STL file and exports them to individual files.
-        /// Bodies are sorted by size (largest first) and optionally filtered by minimum triangle count.
+        ///     Separates multiple bodies from an STL file and exports them to individual files.
+        ///     Bodies are sorted by size (largest first) and optionally filtered by minimum triangle count.
         /// </summary>
         /// <param name="inFile">Input STL file path</param>
         /// <param name="outDir">Output directory for separated body files</param>
@@ -460,5 +351,123 @@ namespace Bolsover.Splitterator
                 WriteAsciiStl(outputPath, bodies[i], solidName);
             }
         }
+
+        #region Nested type: BodyStatistics
+
+        /// <summary>
+        ///     Statistics about a body (connected component)
+        /// </summary>
+        public class BodyStatistics
+        {
+            public int TriangleCount { get; set; }
+            public float SurfaceArea { get; set; }
+            public Vector3 BoundingBoxMin { get; set; }
+            public Vector3 BoundingBoxMax { get; set; }
+            public Vector3 BoundingBoxSize => BoundingBoxMax - BoundingBoxMin;
+            public float BoundingBoxVolume => BoundingBoxSize.X * BoundingBoxSize.Y * BoundingBoxSize.Z;
+        }
+
+        #endregion
+
+        #region Nested type: EdgeKey
+
+        // --- Optimized topology helpers (vertex snapping variant) ---
+        private readonly struct EdgeKey : IEquatable<EdgeKey>
+        {
+            private readonly int _a; // canonicalized so A <= B
+            private readonly int _b; // canonicalized so A <= B
+
+            public EdgeKey(int u, int v)
+            {
+                if (u <= v)
+                {
+                    _a = u;
+                    _b = v;
+                }
+                else
+                {
+                    _a = v;
+                    _b = u;
+                }
+            }
+
+            public bool Equals(EdgeKey other)
+            {
+                return _a == other._a && _b == other._b;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is EdgeKey o && Equals(o);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (_a * 397) ^ _b;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Nested type: ValidationResults
+
+        /// <summary>
+        ///     Validation results for mesh topology
+        /// </summary>
+        public class ValidationResults
+        {
+            public int TotalTriangles { get; set; }
+            public int DegenerateTriangles { get; set; }
+            public int ManifoldEdges { get; set; }
+            public int BoundaryEdges { get; set; }
+            public int NonManifoldEdges { get; set; }
+            public bool IsManifold => NonManifoldEdges == 0;
+        }
+
+        #endregion
+
+        #region Nested type: VertexKeyEps
+
+        // Quantized vertex key for tolerant matching
+        private readonly struct VertexKeyEps : IEquatable<VertexKeyEps>
+        {
+            private readonly int _x; // quantized coordinates
+            private readonly int _y; // quantized coordinates
+            private readonly int _z; // quantized coordinates
+
+            public VertexKeyEps(Vector3 v, float invEps)
+            {
+                _x = (int)Math.Round(v.X * invEps);
+                _y = (int)Math.Round(v.Y * invEps);
+                _z = (int)Math.Round(v.Z * invEps);
+            }
+
+            public bool Equals(VertexKeyEps other)
+            {
+                return _x == other._x && _y == other._y && _z == other._z;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is VertexKeyEps o && Equals(o);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var h = 17;
+                    h = h * 31 + _x;
+                    h = h * 31 + _y;
+                    h = h * 31 + _z;
+                    return h;
+                }
+            }
+        }
+
+        #endregion
     }
 }

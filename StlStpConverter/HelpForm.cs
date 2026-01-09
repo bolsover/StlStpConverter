@@ -20,20 +20,14 @@ namespace Bolsover
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 var infoPath = Path.Combine(baseDir, "information.me");
                 if (File.Exists(infoPath))
-                {
                     infoTextBox.Text = File.ReadAllText(infoPath);
-                }
                 else
-                {
                     infoTextBox.Text = "Information file 'information.me' not found in application directory.";
-                }
             }
             catch (Exception ex)
             {
                 infoTextBox.Text = $"Error loading information: {ex.Message}";
             }
-
-           
         }
     }
 }

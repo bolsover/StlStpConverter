@@ -1,161 +1,161 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0D8D713C-A344-4DC6-8CB1-6790E72A7E96}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>Bolsover</RootNamespace>
-    <AssemblyName>StlStpConverter</AssemblyName>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
-    <LangVersion>9</LangVersion>
-    <ApplicationIcon>nexus.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="ConcurrentPriorityQueue, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PriorityQueue.0.1.0\lib\net45\ConcurrentPriorityQueue.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Bcl.HashCode, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Bcl.HashCode.6.0.0\lib\net462\Microsoft.Bcl.HashCode.dll</HintPath>
-    </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="PriorityQueues, Version=2.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PriorityQueues.2.0.2\lib\netstandard2.0\PriorityQueues.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ConverterParams.cs" />
-    <Compile Include="Converter\AdvancedBrepShape.cs" />
-    <Compile Include="Converter\AxisPlacement3D.cs" />
-    <Compile Include="Converter\Direction.cs" />
-    <Compile Include="Converter\EdgeCurve.cs" />
-    <Compile Include="Converter\EdgeLoop.cs" />
-    <Compile Include="Converter\GeometricRepresentation.cs" />
-    <Compile Include="Converter\IEntity.cs" />
-    <Compile Include="Converter\Face.cs" />
-    <Compile Include="Converter\FaceBound.cs" />
-    <Compile Include="Converter\Line.cs" />
-    <Compile Include="Converter\ManifoldShape.cs" />
-    <Compile Include="Converter\OrientedEdge.cs" />
-    <Compile Include="Converter\Plane.cs" />
-    <Compile Include="Converter\CartesianPoint.cs" />
-    <Compile Include="Converter\Shell.cs" />
-    <Compile Include="Converter\ShellModel.cs" />
-    <Compile Include="Converter\StepWriter.cs" />
-    <Compile Include="Converter\STLReader.cs" />
-    <Compile Include="Converter\Unit.cs" />
-    <Compile Include="Converter\Vector.cs" />
-    <Compile Include="Converter\Vertex.cs" />
-    <Compile Include="Decimator\Face.cs" />
-    <Compile Include="Decimator\StlBinaryExporter.cs" />
-    <Compile Include="Decimator\StlDecimator.cs" />
-    <Compile Include="Decimator\StlExporter.cs" />
-    <Compile Include="Decimator\StlLoader.cs" />
-    <Compile Include="Decimator\Vector3Comparator.cs" />
-    <Compile Include="Decimator\Vertex.cs" />
-    <Compile Include="HelpForm.cs" />
-    <Compile Include="HelpForm.Designer.cs" />
-    <Compile Include="Splitterator\StlSplitterator.cs" />
-    <Compile Include="Splitterator\Triangle.cs" />
-    <Compile Include="StlStpForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="StlStpForm.Designer.cs">
-      <DependentUpon>StlStpForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ParameterChangeEventArgs.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StlStpControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="StlStpControl.Designer.cs">
-      <DependentUpon>StlStpControl.cs</DependentUpon>
-    </Compile>
-    <EmbeddedResource Include="HelpForm.resx" />
-    <EmbeddedResource Include="StlStpForm.resx">
-      <DependentUpon>StlStpForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <EmbeddedResource Include="StlStpControl.resx">
-      <DependentUpon>StlStpControl.cs</DependentUpon>
-    </EmbeddedResource>
-    <None Include="packages.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="nexus.ico" />
-    <Content Include="StlStpConverterInstall.iss" />
-    <Content Include="information.me">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Import\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{0D8D713C-A344-4DC6-8CB1-6790E72A7E96}</ProjectGuid>
+        <OutputType>WinExe</OutputType>
+        <RootNamespace>Bolsover</RootNamespace>
+        <AssemblyName>StlStpConverter</AssemblyName>
+        <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <Deterministic>true</Deterministic>
+        <LangVersion>9</LangVersion>
+        <ApplicationIcon>nexus.ico</ApplicationIcon>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="ConcurrentPriorityQueue, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+            <HintPath>..\packages\PriorityQueue.0.1.0\lib\net45\ConcurrentPriorityQueue.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.Bcl.HashCode, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+            <HintPath>..\packages\Microsoft.Bcl.HashCode.6.0.0\lib\net462\Microsoft.Bcl.HashCode.dll</HintPath>
+        </Reference>
+        <Reference Include="mscorlib"/>
+        <Reference Include="PriorityQueues, Version=2.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+            <HintPath>..\packages\PriorityQueues.2.0.2\lib\netstandard2.0\PriorityQueues.dll</HintPath>
+        </Reference>
+        <Reference Include="System"/>
+        <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+            <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
+        </Reference>
+        <Reference Include="System.ComponentModel.Composition"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Numerics"/>
+        <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+            <HintPath>..\packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+            <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Xml.Linq"/>
+        <Reference Include="System.Data.DataSetExtensions"/>
+        <Reference Include="Microsoft.CSharp"/>
+        <Reference Include="System.Data"/>
+        <Reference Include="System.Deployment"/>
+        <Reference Include="System.Drawing"/>
+        <Reference Include="System.Net.Http"/>
+        <Reference Include="System.Windows.Forms"/>
+        <Reference Include="System.Xml"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="ConverterParams.cs"/>
+        <Compile Include="Converter\AdvancedBrepShape.cs"/>
+        <Compile Include="Converter\AxisPlacement3D.cs"/>
+        <Compile Include="Converter\Direction.cs"/>
+        <Compile Include="Converter\EdgeCurve.cs"/>
+        <Compile Include="Converter\EdgeLoop.cs"/>
+        <Compile Include="Converter\GeometricRepresentation.cs"/>
+        <Compile Include="Converter\IEntity.cs"/>
+        <Compile Include="Converter\Face.cs"/>
+        <Compile Include="Converter\FaceBound.cs"/>
+        <Compile Include="Converter\Line.cs"/>
+        <Compile Include="Converter\ManifoldShape.cs"/>
+        <Compile Include="Converter\OrientedEdge.cs"/>
+        <Compile Include="Converter\Plane.cs"/>
+        <Compile Include="Converter\CartesianPoint.cs"/>
+        <Compile Include="Converter\Shell.cs"/>
+        <Compile Include="Converter\ShellModel.cs"/>
+        <Compile Include="Converter\StepWriter.cs"/>
+        <Compile Include="Converter\STLReader.cs"/>
+        <Compile Include="Converter\Unit.cs"/>
+        <Compile Include="Converter\Vector.cs"/>
+        <Compile Include="Converter\Vertex.cs"/>
+        <Compile Include="Decimator\Face.cs"/>
+        <Compile Include="Decimator\StlBinaryExporter.cs"/>
+        <Compile Include="Decimator\StlDecimator.cs"/>
+        <Compile Include="Decimator\StlExporter.cs"/>
+        <Compile Include="Decimator\StlLoader.cs"/>
+        <Compile Include="Decimator\Vector3Comparator.cs"/>
+        <Compile Include="Decimator\Vertex.cs"/>
+        <Compile Include="HelpForm.cs"/>
+        <Compile Include="HelpForm.Designer.cs"/>
+        <Compile Include="Splitterator\StlSplitterator.cs"/>
+        <Compile Include="Splitterator\Triangle.cs"/>
+        <Compile Include="StlStpForm.cs">
+            <SubType>Form</SubType>
+        </Compile>
+        <Compile Include="StlStpForm.Designer.cs">
+            <DependentUpon>StlStpForm.cs</DependentUpon>
+        </Compile>
+        <Compile Include="ParameterChangeEventArgs.cs"/>
+        <Compile Include="Program.cs"/>
+        <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="StlStpControl.cs">
+            <SubType>UserControl</SubType>
+        </Compile>
+        <Compile Include="StlStpControl.Designer.cs">
+            <DependentUpon>StlStpControl.cs</DependentUpon>
+        </Compile>
+        <EmbeddedResource Include="HelpForm.resx"/>
+        <EmbeddedResource Include="StlStpForm.resx">
+            <DependentUpon>StlStpForm.cs</DependentUpon>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Properties\Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <SubType>Designer</SubType>
+        </EmbeddedResource>
+        <Compile Include="Properties\Resources.Designer.cs">
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Include="StlStpControl.resx">
+            <DependentUpon>StlStpControl.cs</DependentUpon>
+        </EmbeddedResource>
+        <None Include="packages.config"/>
+        <None Include="Properties\Settings.settings">
+            <Generator>SettingsSingleFileGenerator</Generator>
+            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
+        <Compile Include="Properties\Settings.Designer.cs">
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Settings.settings</DependentUpon>
+            <DesignTimeSharedInput>True</DesignTimeSharedInput>
+        </Compile>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="App.config"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="nexus.ico"/>
+        <Content Include="StlStpConverterInstall.iss"/>
+        <Content Include="information.me">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Import\"/>
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

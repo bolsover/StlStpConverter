@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Buffers; // <-- requires System.Buffers NuGet
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace Bolsover.Converter
 {
@@ -34,7 +35,7 @@ namespace Bolsover.Converter
                 // Peek first 5 bytes for "solid"
                 var firstBytes = new byte[5];
                 using (var fsPeek = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read,
-                           bufferSize: 64 * 1024, useAsync: true))
+                           64 * 1024, true))
                 {
                     var bytesRead = await fsPeek.ReadAsync(firstBytes, 0, 5, token).ConfigureAwait(false);
                     if (bytesRead < 5)
@@ -81,14 +82,15 @@ namespace Bolsover.Converter
             return nodes;
 
             // Local function: binary reader using pooled float[] and Buffer.BlockCopy
-            static async Task<List<double>> ReadBinaryWithBlockCopyAsync(string path, CancellationToken ct, IProgress<string> prog)
+            static async Task<List<double>> ReadBinaryWithBlockCopyAsync(string path, CancellationToken ct,
+                IProgress<string> prog)
             {
-                const int TriBytes = 50;     // 12 floats (48 bytes) + 2 attribute bytes
+                const int TriBytes = 50; // 12 floats (48 bytes) + 2 attribute bytes
                 const int FloatsPerTri = 12; // 3 normal + 9 vertices
-                float trisScale = 1.0f;
+                var trisScale = 1.0f;
 
                 using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-                    bufferSize: 64 * 1024, useAsync: true);
+                    64 * 1024, true);
 
                 // Read 80-byte header + 4-byte triangle count
                 var header = new byte[84];
@@ -99,10 +101,8 @@ namespace Bolsover.Converter
                 var blenderExportString = "Exported from Blender";
                 var headerText = Encoding.ASCII.GetString(header, 0, blenderExportString.Length);
                 if (headerText == blenderExportString)
-                {
                     // BLENDER STL File
-                    trisScale = 1000.0f;    // convert tris from Metres to MM
-                }
+                    trisScale = 1000.0f; // convert tris from Metres to MM
 
                 var tris = BitConverter.ToUInt32(header, 80);
                 var remainingBytes = (long)tris * TriBytes;
@@ -142,7 +142,7 @@ namespace Bolsover.Converter
                             {
                                 Buffer.BlockCopy(chunk, src, floats, dst, 48); // 12 floats
                                 src += TriBytes; // advance by 50
-                                dst += 48;       // advance by 48
+                                dst += 48; // advance by 48
                             }
 
                             // Consume the floats: skip the 3 normal floats and add the 9 vertex floats, scale the values to the correct units
@@ -150,9 +150,15 @@ namespace Bolsover.Converter
                             for (var t = 0; t < trisThisChunk; t++)
                             {
                                 f += 3; // skip normal
-                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale);
                             }
                         }
                         finally
@@ -176,7 +182,8 @@ namespace Bolsover.Converter
             }
 
             // Helper to read an exact number of bytes (like Stream.ReadExactly in newer .NET)
-            static async Task<int> ReadExactlyAsync(Stream s, byte[] buffer, int offset, int count, CancellationToken ct)
+            static async Task<int> ReadExactlyAsync(Stream s, byte[] buffer, int offset, int count,
+                CancellationToken ct)
             {
                 var total = 0;
                 while (total < count)
@@ -185,10 +192,11 @@ namespace Bolsover.Converter
                     if (read == 0) break;
                     total += read;
                 }
+
                 return total;
             }
         }
-        
+
         private static async Task<List<double>> ReadStlAsciiAsync(string fileName, CancellationToken token,
             IProgress<string> progress)
         {
@@ -216,10 +224,7 @@ namespace Bolsover.Converter
                     nodes.Add(y);
                     nodes.Add(z);
                     lineCount++;
-                    if (lineCount % 3000 == 0)
-                    {
-                        progress?.Report($"Read {nodes.Count / 9} triangles so far (ASCII)...");
-                    }
+                    if (lineCount % 3000 == 0) progress?.Report($"Read {nodes.Count / 9} triangles so far (ASCII)...");
                 }
             }
             catch (IOException ioEx)
@@ -238,27 +243,28 @@ namespace Bolsover.Converter
             return nodes;
         }
 
-       
+
         private static async Task<bool> LooksLikeAsciiAsync(string fileName)
         {
             // Heuristic: ASCII STL should contain "facet" somewhere in the first few KB
             const int checkSize = 1024; // 1 KB
             var buffer = new byte[checkSize];
 
-            using var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096,
-                useAsync: true);
+            using var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096,
+                true);
             var bytesRead = await fs.ReadAsync(buffer, 0, checkSize);
             var content = Encoding.ASCII.GetString(buffer, 0, bytesRead);
             return content.Contains("facet");
         }
-        
-  
+
+
         public static async Task<int> ConvertToStp(string inputFile, string outputFile, double tol = 1e-6)
         {
             return await ConvertToStp(inputFile, outputFile, tol, CancellationToken.None, null);
         }
 
-        private static async Task<int> ConvertToStp(string inputFile, string outputFile, double tol, CancellationToken token,
+        private static async Task<int> ConvertToStp(string inputFile, string outputFile, double tol,
+            CancellationToken token,
             IProgress<string> progress)
         {
             progress?.Report($"Reading STL: {Path.GetFileName(inputFile)}...");
@@ -269,7 +275,7 @@ namespace Bolsover.Converter
             {
                 var msg = $"No triangles found in STL file: {inputFile}";
                 progress?.Report(msg);
-               // Console.WriteLine(@msg);
+                // Console.WriteLine(@msg);
                 return 1;
             }
 
@@ -281,13 +287,13 @@ namespace Bolsover.Converter
             var stepWriter = new StepWriter();
             var mergedEdgeCount = 0;
             token.ThrowIfCancellationRequested();
-            stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);        
+            stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);
             token.ThrowIfCancellationRequested();
             progress?.Report($"Writing STEP: {Path.GetFileName(outputFile)}...");
             stepWriter.WriteStep(outputFile);
 
             var mergedMsg = $"Merged {mergedEdgeCount} edges";
-            progress?.Report(@mergedMsg);
+            progress?.Report(mergedMsg);
             progress?.Report($@"Exported STEP file: {outputFile}");
             progress?.Report($"Done. {mergedMsg}. Saved: {outputFile}");
 

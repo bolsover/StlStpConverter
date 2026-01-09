@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -7,17 +6,18 @@ namespace Bolsover.Converter
 {
     public class EdgeLoop : IEntity
     {
-        public int Id { get; }
-        public string Label { get; } = string.Empty;
-
-        private List<OrientedEdge> OrientedEdges { get; }
-
-
         public EdgeLoop(int id, List<OrientedEdge> edgesIn)
         {
             Id = id;
             OrientedEdges = edgesIn;
         }
+
+        private List<OrientedEdge> OrientedEdges { get; }
+
+        #region IEntity Members
+
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
 
         // Serialize method
         public void Serialize(StreamWriter writer)
@@ -26,6 +26,8 @@ namespace Bolsover.Converter
             writer.Write(SerializeEdgeReferences());
             writer.WriteLine("));");
         }
+
+        #endregion
 
         private string SerializeEdgeReferences()
         {

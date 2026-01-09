@@ -1,17 +1,27 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Bolsover.Converter;
 
 namespace Bolsover
 {
     public class ConverterParams
     {
         private string _inFile;
+        private string _message;
+        private ShellModel.ShellModelTypes _modelType;
+        private bool _openConverted;
         private string _outFile;
         private double _tol;
-        private bool _openConverted;
         private bool _useSplitterator;
-        private string _message;
-        private Converter.ShellModel.ShellModelTypes _modelType;
+
+        public ConverterParams()
+        {
+            InFile = "";
+            OutFile = "";
+            Tol = 0.0000001;
+            OpenConverted = false;
+            ModelType = ShellModel.ShellModelTypes.Surface;
+        }
 
         public string InFile
         {
@@ -49,19 +59,10 @@ namespace Bolsover
             set => SetField(ref _useSplitterator, value);
         }
 
-        public Converter.ShellModel.ShellModelTypes ModelType
+        public ShellModel.ShellModelTypes ModelType
         {
             get => _modelType;
             set => SetField(ref _modelType, value);
-        }
-
-        public ConverterParams()
-        {
-            InFile = "";
-            OutFile = "";
-            Tol = 0.0000001;
-            OpenConverted = false;
-            ModelType = Converter.ShellModel.ShellModelTypes.Surface;
         }
 
         public event ParameterChangedEventHandler ParameterChanged;

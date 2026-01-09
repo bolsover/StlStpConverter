@@ -1,12 +1,12 @@
 using System;
-using System.Reflection; // For retrieving AssemblyVersion
+using System.Reflection;
 using System.Windows.Forms;
+// For retrieving AssemblyVersion
 
 namespace Bolsover
 {
     public partial class StlStpForm : Form
     {
-        
         public StlStpForm()
         {
             InitializeComponent();
@@ -15,12 +15,10 @@ namespace Bolsover
             // We read it via reflection from the executing assembly.
             var version = GetAssemblyVersionString();
             if (!string.IsNullOrWhiteSpace(version))
-            {
                 // If designer already set a title, append the version; otherwise set a default title with version
-                this.Text = string.IsNullOrWhiteSpace(this.Text)
+                Text = string.IsNullOrWhiteSpace(Text)
                     ? $"STL->STEP Converter v{version}"
-                    : $"{this.Text} v{version}";
-            }
+                    : $"{Text} v{version}";
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -38,15 +36,15 @@ namespace Bolsover
         }
 
         /// <summary>
-        /// Retrieves the AssemblyVersion string from this application's assembly.
-        /// This reads the value specified by [assembly: AssemblyVersion("...")] in Properties\AssemblyInfo.cs.
+        ///     Retrieves the AssemblyVersion string from this application's assembly.
+        ///     This reads the value specified by [assembly: AssemblyVersion("...")] in Properties\AssemblyInfo.cs.
         /// </summary>
         private static string GetAssemblyVersionString()
         {
             try
             {
                 // Option A (direct AssemblyVersion): Assembly.GetExecutingAssembly().GetName().Version
-                Version v = Assembly.GetExecutingAssembly().GetName().Version;
+                var v = Assembly.GetExecutingAssembly().GetName().Version;
                 return v?.ToString();
             }
             catch

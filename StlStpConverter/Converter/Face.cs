@@ -1,20 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Bolsover.Converter
 {
     public class Face : IEntity
     {
-        public int Id { get; }
-        public string Label { get; } = string.Empty;
-
-        private List<FaceBound> FaceBounds { get; }
-        private bool Dir { get; }
-        private Plane Plane { get; }
-
-
         public Face(int id, List<FaceBound> faceBoundsIn, Plane planeIn, bool dirIn)
         {
             Id = id;
@@ -22,6 +12,15 @@ namespace Bolsover.Converter
             Dir = dirIn;
             Plane = planeIn;
         }
+
+        private List<FaceBound> FaceBounds { get; }
+        private bool Dir { get; }
+        private Plane Plane { get; }
+
+        #region IEntity Members
+
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
 
         public void Serialize(StreamWriter writer)
         {
@@ -35,5 +34,7 @@ namespace Bolsover.Converter
 
             writer.WriteLine($"),#{Plane.Id},{(Dir ? ".T." : ".F.")});");
         }
+
+        #endregion
     }
 }

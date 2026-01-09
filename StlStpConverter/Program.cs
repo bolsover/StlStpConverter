@@ -3,13 +3,13 @@ using System.Windows.Forms;
 
 namespace Bolsover
 {
-    static class Program
+    internal static class Program
     {
         /// <summary>
-        /// The main entry cartesianPoint for the application.
+        ///     The main entry cartesianPoint for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        private static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

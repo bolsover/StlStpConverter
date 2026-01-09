@@ -7,18 +7,15 @@ namespace Bolsover.Converter
 {
     public class ShellModel : IEntity
     {
+        #region ShellModelTypes enum
+
         public enum ShellModelTypes
         {
             Surface,
             Solid
         }
 
-        public int Id { get; }
-        public string Label { get; } = string.Empty;
-
-        private List<Shell> Shells { get; }
-
-        private ShellModelTypes ShellModelType { get; }
+        #endregion
 
         public ShellModel(int id, List<Shell> shellsIn)
         {
@@ -33,6 +30,15 @@ namespace Bolsover.Converter
             Shells = shellsIn;
             ShellModelType = shellTypeIn;
         }
+
+        private List<Shell> Shells { get; }
+
+        private ShellModelTypes ShellModelType { get; }
+
+        #region IEntity Members
+
+        public int Id { get; }
+        public string Label { get; } = string.Empty;
 
         public void Serialize(StreamWriter writer)
         {
@@ -52,6 +58,8 @@ namespace Bolsover.Converter
                     throw new Exception("Unknown ShellModel type!");
             }
         }
+
+        #endregion
 
         private string SerializeShellIds()
         {

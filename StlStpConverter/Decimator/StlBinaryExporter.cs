@@ -1,6 +1,4 @@
-﻿
-using System;
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
 using System.Text;
 
@@ -14,13 +12,13 @@ namespace Bolsover.Decimator
             using (var writer = new BinaryWriter(stream))
             {
                 // 1. Write 80-byte header
-                string header = "STL Exported by C# Simplifier";
-                byte[] headerBytes = new byte[80];
+                var header = "STL Exported by C# Simplifier";
+                var headerBytes = new byte[80];
                 Encoding.ASCII.GetBytes(header, 0, header.Length, headerBytes, 0);
                 writer.Write(headerBytes);
 
                 // 2. Write number of triangles
-                uint triangleCount = (uint)simplifier.Faces.Count;
+                var triangleCount = (uint)simplifier.Faces.Count;
                 writer.Write(triangleCount);
 
                 // 3. Write each triangle

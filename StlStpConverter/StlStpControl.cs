@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.IO;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +14,7 @@ namespace Bolsover
 {
     public partial class StlStpControl : UserControl
     {
+        private readonly ConverterParams _converterParams = new();
         private CancellationTokenSource _cts;
 
         public StlStpControl()
@@ -35,13 +36,11 @@ namespace Bolsover
         {
             switch (args.Property)
             {
-                case "InFile": this.infile.Text = args.Value.ToString(); break;
-                case "OutFile": this.outfile.Text = args.Value.ToString(); break;
-                case "Message": this.message.Text = args.Value.ToString(); break;
+                case "InFile": infile.Text = args.Value.ToString(); break;
+                case "OutFile": outfile.Text = args.Value.ToString(); break;
+                case "Message": message.Text = args.Value.ToString(); break;
             }
         }
-
-        private readonly ConverterParams _converterParams = new();
 
         private async void OkButton_Click(object sender, EventArgs e)
         {
@@ -89,9 +88,9 @@ namespace Bolsover
         {
             _cts?.Cancel();
         }
-        
+
         // Extract triangle count from filename if present: *_tris<count>.stl
-        int ExtractTriangleCount(string path)
+        private int ExtractTriangleCount(string path)
         {
             var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"_tris(\d+)\.stl", RegexOptions.IgnoreCase);
             return m.Success ? int.Parse(m.Groups[1].Value) : 0;
@@ -127,10 +126,7 @@ namespace Bolsover
             {
                 // Optionally parse tolerance from comboBox if relevant
                 var tol = _converterParams.Tol;
-                if (comboBox.SelectedItem is string s && double.TryParse(s, out var tolUi))
-                {
-                    tol = tolUi;
-                }
+                if (comboBox.SelectedItem is string s && double.TryParse(s, out var tolUi)) tol = tolUi;
 
                 // First, read STL to get triangle data and count
                 _converterParams.Message = $"Reading STL: {Path.GetFileName(_converterParams.InFile)}...";
@@ -165,6 +161,7 @@ namespace Bolsover
                         _converterParams.Message = @"Conversion cancelled by user";
                         return;
                     }
+
                     openAfter = dlgResult == DialogResult.Yes;
                 }
 
@@ -175,7 +172,8 @@ namespace Bolsover
                     if (string.IsNullOrWhiteSpace(outDir)) outDir = Environment.CurrentDirectory;
 
                     // Snapshot existing *_body_*.stl files to detect new ones produced by the splitterator
-                    var before = new HashSet<string>(Directory.GetFiles(outDir, "*_body_*.stl"), StringComparer.OrdinalIgnoreCase);
+                    var before = new HashSet<string>(Directory.GetFiles(outDir, "*_body_*.stl"),
+                        StringComparer.OrdinalIgnoreCase);
 
                     _converterParams.Message = "Splitting STL into separate bodies...";
                     // Run potentially heavy split on a background thread, honor cancellation
@@ -194,11 +192,11 @@ namespace Bolsover
                     // Order by numeric suffix if possible: *_body_<n>_tris<count>.stl or body_<n>.stl
                     int ExtractIndex(string path)
                     {
-                        var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"_body_(\d+)(?:_tris\d+)?\.stl", RegexOptions.IgnoreCase);
+                        var m = Regex.Match(Path.GetFileName(path) ?? string.Empty, @"_body_(\d+)(?:_tris\d+)?\.stl",
+                            RegexOptions.IgnoreCase);
                         return m.Success ? int.Parse(m.Groups[1].Value) : int.MaxValue;
                     }
 
-               
 
                     newBodies = newBodies.OrderBy(ExtractIndex).ToList();
 
@@ -208,12 +206,12 @@ namespace Bolsover
 
                     var producedSteps = new List<string>();
 
-                    for (int i = 0; i < newBodies.Count; i++)
+                    for (var i = 0; i < newBodies.Count; i++)
                     {
                         token.ThrowIfCancellationRequested();
                         var bodyStl = newBodies[i];
                         var idx = ExtractIndex(bodyStl);
-                        var n = (idx == int.MaxValue ? i + 1 : idx);
+                        var n = idx == int.MaxValue ? i + 1 : idx;
                         var trCount = ExtractTriangleCount(bodyStl);
 
                         // Compute desired STL name to match the STEP base name but with .stl
@@ -225,13 +223,12 @@ namespace Bolsover
                         try
                         {
                             // If the current filename differs, rename/move it to the desired name
-                            if (!string.Equals(Path.GetFullPath(bodyStl), Path.GetFullPath(desiredStlPath), StringComparison.OrdinalIgnoreCase))
+                            if (!string.Equals(Path.GetFullPath(bodyStl), Path.GetFullPath(desiredStlPath),
+                                    StringComparison.OrdinalIgnoreCase))
                             {
                                 if (File.Exists(desiredStlPath))
-                                {
                                     // Overwrite by deleting existing target
                                     File.Delete(desiredStlPath);
-                                }
                                 File.Move(bodyStl, desiredStlPath);
                                 bodyStl = desiredStlPath; // update reference to renamed file
                             }
@@ -239,7 +236,8 @@ namespace Bolsover
                         catch (Exception renameEx)
                         {
                             // If rename fails, continue with the original path but report the issue
-                            _converterParams.Message = $"Warning: Could not rename split STL to '{desiredStlPath}': {renameEx.Message}";
+                            _converterParams.Message =
+                                $"Warning: Could not rename split STL to '{desiredStlPath}': {renameEx.Message}";
                         }
 
                         // Generate STEP filename with triangle count for easy correlation
@@ -256,7 +254,8 @@ namespace Bolsover
 
                         var stepWriterBody = new StepWriter();
                         var mergedEdgesBody = 0;
-                        stepWriterBody.BuildTriangularBody(bodyNodes, tol, ref mergedEdgesBody, _converterParams.ModelType);
+                        stepWriterBody.BuildTriangularBody(bodyNodes, tol, ref mergedEdgesBody,
+                            _converterParams.ModelType);
                         stepWriterBody.WriteStep(stepOut);
 
                         producedSteps.Add(stepOut);
@@ -264,9 +263,9 @@ namespace Bolsover
 
                     if (!token.IsCancellationRequested)
                     {
-                        _converterParams.Message = $"Conversion complete: {producedSteps.Count} STEP file(s) written to '{outDir}'.";
+                        _converterParams.Message =
+                            $"Conversion complete: {producedSteps.Count} STEP file(s) written to '{outDir}'.";
                         if (openAfter)
-                        {
                             try
                             {
                                 // Open the output folder in Explorer for convenience
@@ -276,7 +275,6 @@ namespace Bolsover
                             {
                                 /* ignore */
                             }
-                        }
                     }
                 }
                 else
@@ -298,7 +296,6 @@ namespace Bolsover
                         _converterParams.Message = @"Conversion complete";
 
                         if (openAfter)
-                        {
                             try
                             {
                                 Process.Start(_converterParams.OutFile);
@@ -307,7 +304,6 @@ namespace Bolsover
                             {
                                 /* ignore */
                             }
-                        }
                     }
                 }
             }
@@ -340,13 +336,14 @@ namespace Bolsover
         private void OpenChkBox_CheckedChanged(object sender, EventArgs e)
         {
             _converterParams.OpenConverted = openChkBox.Checked;
-           
         }
 
         private void splitCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             _converterParams.UseSplitterator = splitCheckBox.Checked;
-            openChkBox.Text = _converterParams.UseSplitterator ? @"Split, convert, open directory" : @"Open STL after conversion";
+            openChkBox.Text = _converterParams.UseSplitterator
+                ? @"Split, convert, open directory"
+                : @"Open STL after conversion";
         }
     }
 }
