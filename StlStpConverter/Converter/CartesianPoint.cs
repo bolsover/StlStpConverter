@@ -24,7 +24,7 @@ namespace Bolsover.Converter
         // Serialize method
         public void Serialize(StreamWriter writer)
         {
-            writer.WriteLine($"#{Id} = CARTESIAN_POINT('{Label}', ({X},{Y},{Z}));");
+            writer.WriteLine($"#{Id} = CARTESIAN_POINT('{Label}', ({X:0.000000000000000},{Y:0.000000000000000},{Z:0.000000000000000}));");    // was {X},{Y},{Z}
         }
     }
 }

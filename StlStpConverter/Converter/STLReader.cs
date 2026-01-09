@@ -85,6 +85,7 @@ namespace Bolsover.Converter
             {
                 const int TriBytes = 50;     // 12 floats (48 bytes) + 2 attribute bytes
                 const int FloatsPerTri = 12; // 3 normal + 9 vertices
+                float trisScale = 1.0f;
 
                 using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
                     bufferSize: 64 * 1024, useAsync: true);
@@ -93,6 +94,15 @@ namespace Bolsover.Converter
                 var header = new byte[84];
                 var hdrRead = await ReadExactlyAsync(fs, header, 0, 84, ct).ConfigureAwait(false);
                 if (hdrRead != 84) throw new EndOfStreamException("Short STL header");
+
+                // If the file is a Blender Export (header is usually 'Exported from Blender-' followed by version number), then scale the tris, as Blender always exports in Metres
+                var blenderExportString = "Exported from Blender";
+                var headerText = Encoding.ASCII.GetString(header, 0, blenderExportString.Length);
+                if (headerText == blenderExportString)
+                {
+                    // BLENDER STL File
+                    trisScale = 1000.0f;    // convert tris from Metres to MM
+                }
 
                 var tris = BitConverter.ToUInt32(header, 80);
                 var remainingBytes = (long)tris * TriBytes;
@@ -135,14 +145,14 @@ namespace Bolsover.Converter
                                 dst += 48;       // advance by 48
                             }
 
-                            // Consume the floats: skip the 3 normal floats and add the 9 vertex floats
+                            // Consume the floats: skip the 3 normal floats and add the 9 vertex floats, scale the values to the correct units
                             var f = 0;
                             for (var t = 0; t < trisThisChunk; t++)
                             {
                                 f += 3; // skip normal
-                                result.Add(floats[f++]); result.Add(floats[f++]); result.Add(floats[f++]);
-                                result.Add(floats[f++]); result.Add(floats[f++]); result.Add(floats[f++]);
-                                result.Add(floats[f++]); result.Add(floats[f++]); result.Add(floats[f++]);
+                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
+                                result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale); result.Add(floats[f++] * trisScale);
                             }
                         }
                         finally
@@ -271,7 +281,7 @@ namespace Bolsover.Converter
             var stepWriter = new StepWriter();
             var mergedEdgeCount = 0;
             token.ThrowIfCancellationRequested();
-            stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);
+            stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);        
             token.ThrowIfCancellationRequested();
             progress?.Report($"Writing STEP: {Path.GetFileName(outputFile)}...");
             stepWriter.WriteStep(outputFile);

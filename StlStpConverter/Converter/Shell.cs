@@ -13,12 +13,18 @@ namespace Bolsover.Converter
         private List<Face> Faces { get; }
         private bool IsOpen { get; }
 
-
         public Shell(int id, List<Face> faces)
         {
             Id = id;
             Faces = faces;
             IsOpen = true;
+        }
+
+        public Shell(int id, List<Face> faces, bool open)
+        {
+            Id = id;
+            Faces = faces;
+            IsOpen = open;
         }
 
         public void Serialize(StreamWriter writer)

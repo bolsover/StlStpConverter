@@ -11,6 +11,7 @@ namespace Bolsover
         private bool _openConverted;
         private bool _useSplitterator;
         private string _message;
+        private Converter.ShellModel.ShellModelTypes _modelType;
 
         public string InFile
         {
@@ -48,12 +49,19 @@ namespace Bolsover
             set => SetField(ref _useSplitterator, value);
         }
 
+        public Converter.ShellModel.ShellModelTypes ModelType
+        {
+            get => _modelType;
+            set => SetField(ref _modelType, value);
+        }
+
         public ConverterParams()
         {
             InFile = "";
             OutFile = "";
             Tol = 0.0000001;
             OpenConverted = false;
+            ModelType = Converter.ShellModel.ShellModelTypes.Surface;
         }
 
         public event ParameterChangedEventHandler ParameterChanged;

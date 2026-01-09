@@ -256,7 +256,7 @@ namespace Bolsover
 
                         var stepWriterBody = new StepWriter();
                         var mergedEdgesBody = 0;
-                        stepWriterBody.BuildTriangularBody(bodyNodes, tol, ref mergedEdgesBody);
+                        stepWriterBody.BuildTriangularBody(bodyNodes, tol, ref mergedEdgesBody, _converterParams.ModelType);
                         stepWriterBody.WriteStep(stepOut);
 
                         producedSteps.Add(stepOut);
@@ -287,7 +287,7 @@ namespace Bolsover
                     var stepWriter = new StepWriter();
                     var mergedEdgeCount = 0;
                     token.ThrowIfCancellationRequested();
-                    stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);
+                    stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount, _converterParams.ModelType);
                     token.ThrowIfCancellationRequested();
 
                     _converterParams.Message = $"Writing STEP: {Path.GetFileName(_converterParams.OutFile)}...";

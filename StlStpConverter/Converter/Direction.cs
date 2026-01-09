@@ -24,7 +24,7 @@ namespace Bolsover.Converter
         // Serialize method
         public void Serialize(StreamWriter stream)
         {
-            stream.WriteLine($"#{Id} = DIRECTION('{Label}', ({X},{Y},{Z}));");
+            stream.WriteLine($"#{Id} = DIRECTION('{Label}', ({X:0.000000000000000},{Y:0.000000000000000},{Z:0.000000000000000}));");    // was {X},{Y},{Z}
         }
     }
 }
