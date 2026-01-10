@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Bolsover.Converter;
+using Bolsover.Import;
 
 namespace Bolsover.Splitterator
 {
@@ -149,7 +150,7 @@ namespace Bolsover.Splitterator
             return diagonal * 0.00001f;
         }
 
-        public static void WriteAsciiStl(string path, List<Triangle> triangles, string solidName = "body")
+        private static void WriteAsciiStl(string path, List<Triangle> triangles, string solidName = "body")
         {
             using var writer = new StreamWriter(path);
             writer.WriteLine($"solid {solidName}");
@@ -159,7 +160,6 @@ namespace Bolsover.Splitterator
                 writer.WriteLine("  facet normal 0 0 0");
                 writer.WriteLine("    outer loop");
                 foreach (var v in tri.Vertices) writer.WriteLine($"      vertex {v.X} {v.Y} {v.Z}");
-
                 writer.WriteLine("    endloop");
                 writer.WriteLine("  endfacet");
             }

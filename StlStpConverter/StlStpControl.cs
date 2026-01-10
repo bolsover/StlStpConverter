@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Bolsover.Converter;
+using Bolsover.Export;
+using Bolsover.Import;
 using Bolsover.Splitterator;
 
 namespace Bolsover
@@ -241,8 +243,8 @@ namespace Bolsover
                         }
 
                         // Generate STEP filename with triangle count for easy correlation
-                        var stepOut = triCount > 0
-                            ? Path.Combine(outDir, $"{baseOutName}_body_{n:D2}_tris{triCount}{outExt}")
+                        var stepOut = trCount > 0
+                            ? Path.Combine(outDir, $"{baseOutName}_body_{n:D2}_tris{trCount}{outExt}")
                             : Path.Combine(outDir, $"{baseOutName}_body_{n:D2}{outExt}");
 
                         _converterParams.Message = $"Converting body {n} to STEP...";

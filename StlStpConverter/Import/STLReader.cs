@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Bolsover.Converter
+namespace Bolsover.Import
 {
     public abstract class StlReader
     {
@@ -64,11 +64,11 @@ namespace Bolsover.Converter
             }
             catch (IOException ioEx)
             {
-                Console.WriteLine($"I/O error: {ioEx.Message}");
+                Console.WriteLine($@"I/O error: {ioEx.Message}");
             }
             catch (UnauthorizedAccessException uaEx)
             {
-                Console.WriteLine($"Access denied: {uaEx.Message}");
+                Console.WriteLine($@"Access denied: {uaEx.Message}");
             }
             catch (OperationCanceledException)
             {
@@ -76,7 +76,7 @@ namespace Bolsover.Converter
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
+                Console.WriteLine($@"Unexpected error: {ex.Message}");
             }
 
             return nodes;
@@ -85,8 +85,8 @@ namespace Bolsover.Converter
             static async Task<List<double>> ReadBinaryWithBlockCopyAsync(string path, CancellationToken ct,
                 IProgress<string> prog)
             {
-                const int TriBytes = 50; // 12 floats (48 bytes) + 2 attribute bytes
-                const int FloatsPerTri = 12; // 3 normal + 9 vertices
+                const int triBytes = 50; // 12 floats (48 bytes) + 2 attribute bytes
+                const int floatsPerTri = 12; // 3 normal + 9 vertices
                 var trisScale = 1.0f;
 
                 using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
@@ -105,22 +105,22 @@ namespace Bolsover.Converter
                     trisScale = 1000.0f; // convert tris from Metres to MM
 
                 var tris = BitConverter.ToUInt32(header, 80);
-                var remainingBytes = (long)tris * TriBytes;
+                var remainingBytes = (long)tris * triBytes;
 
                 var result = new List<double>(checked((int)tris * 9)); // 9 coordinates per triangle
 
                 // Choose a reasonable number of triangles per chunk to limit working set
                 // Example: ~8 MB chunks => 8*1024*1024 / 50 ≈ 167,772 tris per chunk (upper bound).
                 // We'll clamp to something smaller to keep float buffers modest.
-                const int MaxTrisPerChunk = 80_000;
+                const int maxTrisPerChunk = 80_000;
 
                 long trianglesRead = 0;
                 while (remainingBytes > 0)
                 {
                     ct.ThrowIfCancellationRequested();
 
-                    var trisThisChunk = (int)Math.Min(MaxTrisPerChunk, remainingBytes / TriBytes);
-                    var bytesThisChunk = trisThisChunk * TriBytes;
+                    var trisThisChunk = (int)Math.Min(maxTrisPerChunk, remainingBytes / triBytes);
+                    var bytesThisChunk = trisThisChunk * triBytes;
                     if (bytesThisChunk == 0) break;
 
                     // Read exactly the bytes for this chunk
@@ -131,7 +131,7 @@ namespace Bolsover.Converter
                         if (got != bytesThisChunk) throw new EndOfStreamException("Unexpected end of STL file");
 
                         // Rent float buffer for the 12 floats per triangle (normal + verts)
-                        var totalFloats = trisThisChunk * FloatsPerTri; // 12*tris
+                        var totalFloats = trisThisChunk * floatsPerTri; // 12*tris
                         var floats = ArrayPool<float>.Shared.Rent(totalFloats);
                         try
                         {
@@ -141,7 +141,7 @@ namespace Bolsover.Converter
                             for (var t = 0; t < trisThisChunk; t++)
                             {
                                 Buffer.BlockCopy(chunk, src, floats, dst, 48); // 12 floats
-                                src += TriBytes; // advance by 50
+                                src += triBytes; // advance by 50
                                 dst += 48; // advance by 48
                             }
 
@@ -150,15 +150,10 @@ namespace Bolsover.Converter
                             for (var t = 0; t < trisThisChunk; t++)
                             {
                                 f += 3; // skip normal
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
-                                result.Add(floats[f++] * trisScale);
+                                for (var i = 0; i < 9; i++)
+                                {
+                                    result.Add(floats[f++] * trisScale);
+                                }
                             }
                         }
                         finally
@@ -255,49 +250,6 @@ namespace Bolsover.Converter
             var bytesRead = await fs.ReadAsync(buffer, 0, checkSize);
             var content = Encoding.ASCII.GetString(buffer, 0, bytesRead);
             return content.Contains("facet");
-        }
-
-
-        public static async Task<int> ConvertToStp(string inputFile, string outputFile, double tol = 1e-6)
-        {
-            return await ConvertToStp(inputFile, outputFile, tol, CancellationToken.None, null);
-        }
-
-        private static async Task<int> ConvertToStp(string inputFile, string outputFile, double tol,
-            CancellationToken token,
-            IProgress<string> progress)
-        {
-            progress?.Report($"Reading STL: {Path.GetFileName(inputFile)}...");
-            // Read STL file (async)
-            var nodes = await ReadStlAsync(inputFile, token, progress);
-            token.ThrowIfCancellationRequested();
-            if (nodes.Count / 9 == 0)
-            {
-                var msg = $"No triangles found in STL file: {inputFile}";
-                progress?.Report(msg);
-                // Console.WriteLine(@msg);
-                return 1;
-            }
-
-            var triCount = nodes.Count / 9;
-            progress?.Report($"Read {triCount} triangles. Building STEP body...");
-            //Console.WriteLine($@"Read {triCount} triangles from {inputFile}");
-
-            // Build STEP body and write output
-            var stepWriter = new StepWriter();
-            var mergedEdgeCount = 0;
-            token.ThrowIfCancellationRequested();
-            stepWriter.BuildTriangularBody(nodes, tol, ref mergedEdgeCount);
-            token.ThrowIfCancellationRequested();
-            progress?.Report($"Writing STEP: {Path.GetFileName(outputFile)}...");
-            stepWriter.WriteStep(outputFile);
-
-            var mergedMsg = $"Merged {mergedEdgeCount} edges";
-            progress?.Report(mergedMsg);
-            progress?.Report($@"Exported STEP file: {outputFile}");
-            progress?.Report($"Done. {mergedMsg}. Saved: {outputFile}");
-
-            return 0;
         }
     }
 }

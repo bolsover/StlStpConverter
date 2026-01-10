@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Bolsover.Converter;
 
-namespace Bolsover.Converter
+namespace Bolsover.Export
 {
     public class StepWriter
     {
@@ -150,6 +151,7 @@ namespace Bolsover.Converter
         /// <param name="triangleList"></param>
         /// <param name="tolerance"></param>
         /// <param name="mergedEdgeCount"></param>
+        /// <param name="modelType"></param>
         public void BuildTriangularBody(List<double> triangleList, double tolerance, ref int mergedEdgeCount,
             ShellModel.ShellModelTypes modelType)
         {
