@@ -5,7 +5,6 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
-using Bolsover.Converter;
 using Bolsover.Import;
 
 namespace Bolsover.Splitterator
@@ -216,7 +215,9 @@ namespace Bolsover.Splitterator
                 }
 
                 var group = new List<Triangle>(compIdxs.Count);
-                for (var k = 0; k < compIdxs.Count; k++) group.Add(triangles[compIdxs[k]]);
+                foreach (var t in compIdxs)
+                    group.Add(triangles[t]);
+
                 result.Add(group);
             }
 
@@ -230,7 +231,7 @@ namespace Bolsover.Splitterator
         /// <param name="components">List of connected components to filter</param>
         /// <param name="minTriangleCount">Minimum number of triangles required for a body to be included</param>
         /// <returns>Filtered and sorted list of components</returns>
-        public static List<List<Triangle>> FilterSmallBodies(List<List<Triangle>> components, int minTriangleCount = 1)
+        private static List<List<Triangle>> FilterSmallBodies(List<List<Triangle>> components, int minTriangleCount = 1)
         {
             if (components == null || components.Count == 0) return new List<List<Triangle>>();
 
@@ -246,7 +247,7 @@ namespace Bolsover.Splitterator
         /// <summary>
         ///     Computes statistics for a body (list of triangles)
         /// </summary>
-        public static BodyStatistics ComputeBodyStatistics(List<Triangle> triangles)
+        private static BodyStatistics ComputeBodyStatistics(List<Triangle> triangles)
         {
             if (triangles == null || triangles.Count == 0)
                 return new BodyStatistics();
@@ -328,7 +329,6 @@ namespace Bolsover.Splitterator
         /// <param name="inFile">Input STL file path</param>
         /// <param name="outDir">Output directory for separated body files</param>
         /// <param name="minTriangleCount">Minimum triangle count to include a body (default: 1)</param>
-        /// <param name="epsilon">Optional tolerance for vertex snapping (default: auto-calculated)</param>
         public static void SeparateBodies(string inFile, string outDir, int minTriangleCount = 1)
         {
             var triangles = ParseStl(inFile);
@@ -357,7 +357,7 @@ namespace Bolsover.Splitterator
         /// <summary>
         ///     Statistics about a body (connected component)
         /// </summary>
-        public class BodyStatistics
+        private class BodyStatistics
         {
             public int TriangleCount { get; set; }
             public float SurfaceArea { get; set; }
@@ -424,7 +424,6 @@ namespace Bolsover.Splitterator
             public int ManifoldEdges { get; set; }
             public int BoundaryEdges { get; set; }
             public int NonManifoldEdges { get; set; }
-            public bool IsManifold => NonManifoldEdges == 0;
         }
 
         #endregion

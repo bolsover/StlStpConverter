@@ -20,7 +20,7 @@ namespace Bolsover.Import
             {
                 if (!File.Exists(fileName))
                 {
-                    Console.WriteLine($"Failed to open STL file: {fileName}");
+                    Console.WriteLine($@"Failed to open STL file: {fileName}");
                     return nodes;
                 }
 
@@ -28,7 +28,7 @@ namespace Bolsover.Import
                 var fileSize = fileInfo.Length;
                 if (fileSize < 15)
                 {
-                    Console.WriteLine($"Invalid STL file: {fileName}");
+                    Console.WriteLine($@"Invalid STL file: {fileName}");
                     return nodes;
                 }
 
@@ -40,7 +40,7 @@ namespace Bolsover.Import
                     var bytesRead = await fsPeek.ReadAsync(firstBytes, 0, 5, token).ConfigureAwait(false);
                     if (bytesRead < 5)
                     {
-                        Console.WriteLine($"Invalid STL file: {fileName}");
+                        Console.WriteLine($@"Invalid STL file: {fileName}");
                         return nodes;
                     }
                 }
