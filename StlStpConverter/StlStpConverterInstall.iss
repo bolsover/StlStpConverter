@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AlibreStlStpConverter"
-#define MyAppVersion "2.2"
+#define MyAppVersion "2.3"
 #define MyAppPublisher "David Bolsover"
 #define MyAppURL "https://github.com/bolsover/StlStpConverter"
 
@@ -19,7 +19,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\AlibreStlStpConverter
 DefaultGroupName={#MyAppName}
-;LicenseFile=D:\Repository\Jetbrains\Bolsover\AlibreExportOpen\Copyright and License.txt
+LicenseFile=D:\02_Repository\02_Bolsover\StlStpConverter\LICENSE
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=D:\02_Repository\02_Bolsover\StlStpConverter\Setup
